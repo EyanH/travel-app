@@ -1,0 +1,10 @@
+# Local backup of the original Peru app (not needed online)
+_peru-reference.html
+
+# Redundant starter kit copy
+travel-app-starter/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.log

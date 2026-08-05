@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0e14" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>Travel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
+
+<script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --bg:#0b0e14; --bg2:#070a0f; --elev:#11151d;
+    --card:#141924; --card2:#1b212d; --card3:#232a37;
+    --border:#242c3a; --border2:#1a212c;
+    --text:#eef2f7; --text2:#c7cfda; --muted:#8b95a6; --muted2:#5c6577;
+    --accent:#78bbff; --accent2:#5aa2ff; --gold:#e6b566; --good:#54c98a; --bad:#f4776a;
+    --travel:#5aa2ff; --explore:#55c98a; --trek:#ef9350; --flex:#b18cf0;
+    --shadow:0 10px 40px -12px rgba(0,0,0,.7); --shadow-lg:0 24px 70px -20px rgba(0,0,0,.8);
+    --radius:18px; --radius-sm:12px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  html,body,#root{min-height:100vh;min-height:100dvh;background:var(--bg)}
+  body{color:var(--text);font-family:'DM Sans',system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden;
+    background-image:radial-gradient(900px 500px at 78% -8%, rgba(120,187,255,.08), transparent 60%),
+                     radial-gradient(700px 500px at 5% 3%, rgba(177,140,240,.06), transparent 55%);
+    background-attachment:fixed;}
+  h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:700;margin:0;line-height:1.12}
+  a{color:var(--accent);text-decoration:none}
+  button{font-family:inherit}
+  input,textarea{font-family:inherit;color:inherit}
+  ::selection{background:rgba(120,187,255,.28)}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--card3);border-radius:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  @media(max-width:560px){.wrap{padding:0 15px}}
+
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{50%{opacity:.4}}
+  .rise{animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);
+    background:rgba(27,33,45,.72);color:var(--text);border-radius:11px;padding:9px 15px;
+    font-size:14px;font-weight:600;cursor:pointer;transition:.16s;backdrop-filter:blur(8px)}
+  .btn:hover{border-color:var(--muted2);background:var(--card2);transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(180deg,#8cc4ff,#5aa2ff);border-color:transparent;color:#08111e;box-shadow:0 6px 20px -6px rgba(90,162,255,.6)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:6px 11px;font-size:12.5px;border-radius:9px}
+  .btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+  .icon-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:5px;border-radius:8px;font-size:14px;line-height:1;transition:.14s}
+  .icon-btn:hover{color:var(--text);background:var(--card2)}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+    padding:4px 11px;border-radius:999px;background:rgba(27,33,45,.7);border:1px solid var(--border);color:var(--text2);letter-spacing:.2px}
+  .chip.soon{background:rgba(120,187,255,.14);border-color:rgba(120,187,255,.35);color:#a9d1ff}
+  .chip.now{background:rgba(84,201,138,.15);border-color:rgba(84,201,138,.4);color:#7ee0ac}
+  .chip.past{background:rgba(139,149,166,.12);color:var(--muted)}
+  .flagimg{width:auto;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,.6);vertical-align:middle;display:inline-block}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:24px 0 6px}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand .mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:19px;
+    background:linear-gradient(145deg,#1c2434,#11151d);border:1px solid var(--border);box-shadow:var(--shadow)}
+  .brand .name{font-weight:700;font-size:16px;letter-spacing:.2px}
+  .brand .name small{display:block;font-weight:500;font-size:11.5px;color:var(--muted);letter-spacing:.3px}
+
+  .syncbadge{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text2);
+    background:rgba(27,33,45,.7);border:1px solid var(--border);border-radius:999px;padding:6px 13px;backdrop-filter:blur(8px)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted2)}
+  .dot.live{background:var(--good);box-shadow:0 0 0 4px rgba(84,201,138,.14)}
+  .dot.local{background:var(--gold)}
+  .dot.saving{background:var(--accent);animation:pulse 1s infinite}
+  .dot.error{background:var(--bad)}
+
+  .home-hero{padding:30px 0 8px}
+  .home-hero h1{font-size:44px;letter-spacing:-.5px}
+  .home-hero p{color:var(--muted);margin-top:8px;font-size:15px;max-width:520px}
+  @media(max-width:560px){.home-hero h1{font-size:32px}}
+  .group-label{display:flex;align-items:center;gap:12px;margin:34px 0 4px;color:var(--muted);
+    font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
+  .group-label:after{content:"";flex:1;height:1px;background:var(--border2)}
+
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;padding:14px 0 8px}
+  @media(max-width:900px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:600px){.tiles{grid-template-columns:1fr}}
+  .tile{position:relative;border-radius:var(--radius);overflow:hidden;cursor:pointer;aspect-ratio:3/3.5;
+    border:1px solid var(--border);background:var(--card);transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s;box-shadow:var(--shadow)}
+  .tile:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+  .tile .bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+  .tile:hover .bg{transform:scale(1.07)}
+  .tile .grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(7,10,15,.95) 4%,rgba(7,10,15,.5) 40%,rgba(7,10,15,.08) 78%,rgba(7,10,15,.25) 100%)}
+  .tile .ring{position:absolute;inset:0;border-radius:var(--radius);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);pointer-events:none}
+  .tile .top{position:absolute;top:14px;left:14px;right:14px;display:flex;align-items:flex-start;justify-content:space-between}
+  .tile .content{position:absolute;left:18px;right:18px;bottom:16px}
+  .tile .content h2{font-size:29px;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.7);letter-spacing:-.3px}
+  .tile .content .sub{color:#dfe5ec;font-size:13px;margin-top:4px;text-shadow:0 1px 8px rgba(0,0,0,.7);font-weight:500}
+  .tile .stats{display:flex;gap:16px;margin-top:13px}
+  .tile .stats .s b{font-size:17px;font-family:'Playfair Display',serif;color:#fff}
+  .tile .stats .s span{font-size:10.5px;color:#c3ccd6;margin-left:4px;text-transform:uppercase;letter-spacing:.6px}
+  .tile.new{display:flex;align-items:center;justify-content:center;border-style:dashed;background:rgba(20,25,36,.4);box-shadow:none}
+  .tile.new:hover{border-color:var(--accent);background:rgba(120,187,255,.05);transform:translateY(-4px)}
+  .tile.new .np{text-align:center;color:var(--muted)}
+  .tile.new .np .plus{font-size:34px;font-weight:200;line-height:1;margin-bottom:8px}
+  .tile.new:hover .np{color:var(--accent)}
+  .empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 0}
+
+  .hero{position:relative;height:300px;overflow:hidden;background:var(--card)}
+  @media(max-width:560px){.hero{height:230px}}
+  .hero .bg{position:absolute;inset:0;background-size:cover;background-position:center}
+  .hero .grad{position:absolute;inset:0;background:linear-gradient(to top,var(--bg) 1%,rgba(11,14,20,.35) 52%,rgba(11,14,20,.5) 100%)}
+  .hero .top{position:absolute;top:16px;left:0;right:0}
+  .hero .top .wrap{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .hero .htext{position:absolute;left:0;right:0;bottom:20px}
+  .hero .htext .inner{display:flex;flex-direction:column;gap:7px}
+  .hero .htext .line1{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .hero .htext h1{font-size:46px;color:#fff;text-shadow:0 3px 22px rgba(0,0,0,.65);letter-spacing:-.5px}
+  @media(max-width:560px){.hero .htext h1{font-size:31px}}
+  .hero .htext .sub{color:#e6ebf1;font-size:14.5px;text-shadow:0 1px 10px rgba(0,0,0,.8);font-weight:500}
+
+  .statrow{display:flex;gap:30px;flex-wrap:wrap;padding:20px 0 2px}
+  .statrow .s b{font-family:'Playfair Display',serif;font-size:26px}
+  .statrow .s span{color:var(--muted);font-size:11.5px;margin-left:7px;text-transform:uppercase;letter-spacing:.7px}
+
+  .tabsbar{position:sticky;top:0;z-index:30;background:linear-gradient(var(--bg),var(--bg) 70%,rgba(11,14,20,.6));padding-top:8px}
+  .tabs{display:flex;gap:7px;overflow-x:auto;padding:10px 0;scrollbar-width:none;border-bottom:1px solid var(--border2)}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;padding:9px 16px;border-radius:11px;border:1px solid transparent;color:var(--muted);
+    font-weight:600;font-size:14px;cursor:pointer;background:transparent;transition:.15s;display:flex;align-items:center;gap:7px}
+  .tab:hover{color:var(--text2);background:var(--card)}
+  .tab.active{color:var(--text);background:var(--card2);border-color:var(--border);box-shadow:var(--shadow)}
+
+  .card{background:linear-gradient(180deg,var(--card),var(--elev));border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:18px 0;box-shadow:var(--shadow)}
+  .card.tight{padding:15px}
+  .section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 2px}
+  .section-title h2{font-size:26px;letter-spacing:-.3px}
+  .muted{color:var(--muted)} .small{font-size:13px} .center{text-align:center}
+
+  .rail{display:flex;gap:9px;overflow-x:auto;padding:4px 2px 12px;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .rpill{flex:0 0 auto;min-width:62px;text-align:center;padding:9px 8px;border-radius:13px;cursor:pointer;
+    background:var(--card);border:1px solid var(--border);transition:.15s}
+  .rpill:hover{border-color:var(--muted2);transform:translateY(-2px)}
+  .rpill .rw{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .rpill .rn{font-size:19px;font-weight:700;font-family:'Playfair Display',serif;margin-top:1px}
+  .rpill .re{font-size:15px;margin-top:2px}
+
+  .day{position:relative;padding-left:22px}
+  .day:before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:4px;background:var(--muted2)}
+  .day.travel:before{background:var(--travel)} .day.explore:before{background:var(--explore)}
+  .day.trek:before{background:var(--trek)} .day.flex:before{background:var(--flex)}
+  .day-head{display:flex;align-items:flex-start;gap:13px}
+  .day-emoji{font-size:27px;line-height:1;cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+  .day-meta{flex:1;min-width:0}
+  .day-daylabel{font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+  .day-title{font-size:22px;margin-top:2px;letter-spacing:-.2px}
+  .day-loc{color:var(--muted);font-size:13px;margin-top:3px}
+  .type-pill{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap}
+  .type-pill.travel{background:rgba(90,162,255,.16);color:#9dc6ff}
+  .type-pill.explore{background:rgba(85,201,138,.16);color:#7fe0ac}
+  .type-pill.trek{background:rgba(239,147,80,.17);color:#f6b07e}
+  .type-pill.flex{background:rgba(177,140,240,.17);color:#cbb0f7}
+
+  .detail-row{display:flex;gap:14px;padding:11px 0;position:relative}
+  .detail-row+.detail-row{border-top:1px solid var(--border2)}
+  .detail-time{flex:0 0 78px;color:var(--accent);font-weight:700;font-size:12.5px;padding-top:2px}
+  .detail-body{flex:1;min-width:0}
+  .detail-text{font-size:14.5px;font-weight:500}
+  .detail-sub{color:var(--muted);font-size:13px;margin-top:3px;white-space:pre-wrap}
+  .tips{margin-top:14px;padding:12px 14px;background:linear-gradient(180deg,rgba(230,181,102,.09),rgba(230,181,102,.05));
+    border:1px solid rgba(230,181,102,.24);border-radius:12px;font-size:13.5px;color:#eccf98;line-height:1.55}
+  .tips b{color:var(--gold)}
+  .accom{margin-top:12px;display:flex;align-items:center;gap:9px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:11px 14px}
+  .accom .al{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:600}
+  .suggs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+  .ed{border-radius:6px;padding:1px 5px;margin:-1px -5px;cursor:text;transition:background .12s,box-shadow .12s;outline:none;white-space:pre-wrap;word-break:break-word}
+  .ed:hover{background:rgba(139,149,166,.1)}
+  .ed:focus{background:rgba(120,187,255,.12);box-shadow:inset 0 0 0 1px rgba(120,187,255,.4)}
+  .ed.empty:before{content:attr(data-ph);color:var(--muted2);font-style:italic}
+
+  .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:11px}
+  .wcard{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center}
+  .wcard .wc{font-size:28px} .wcard .wt{font-size:22px;font-weight:700;font-family:'Playfair Display',serif;margin-top:2px}
+  .wcard .wl{font-size:12.5px;color:var(--text2);text-transform:capitalize;margin-top:4px;font-weight:600}
+  .wcard .wr{font-size:11px;color:var(--muted);margin-top:2px}
+
+  .checkline{display:flex;align-items:center;gap:12px;padding:9px 0}
+  .checkline+.checkline{border-top:1px solid var(--border2)}
+  .checkbox{flex:0 0 21px;height:21px;border-radius:7px;border:1.5px solid var(--muted2);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.14s;font-size:13px}
+  .checkbox:hover{border-color:var(--accent)}
+  .checkbox.on{background:var(--good);border-color:var(--good);color:#062;box-shadow:0 0 0 4px rgba(84,201,138,.12)}
+  .checkline.done .ct{color:var(--muted2);text-decoration:line-through}
+  .ct{flex:1;min-width:0}
+  .addline{display:flex;gap:9px;margin-top:12px}
+  .addline input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px}
+  .addline input:focus{outline:none;border-color:var(--accent)}
+  .prog{height:9px;border-radius:999px;background:var(--card2);overflow:hidden;margin:8px 0 2px;border:1px solid var(--border2)}
+  .prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--good),#7ee0ac);border-radius:999px;transition:width .4s}
+
+  .quest{display:flex;align-items:flex-start;gap:12px;padding:12px 0}
+  .quest+.quest{border-top:1px solid var(--border2)}
+  .quest .checkbox{margin-top:1px}
+  .quest.done .qt{color:var(--muted2);text-decoration:line-through}
+  .qt{font-weight:500}
+  .qsub{color:var(--muted);font-size:12.5px;margin-top:3px;white-space:pre-wrap}
+  .qbadge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 9px;border-radius:999px;color:#08111e;white-space:nowrap}
+
+  .flight .route{font-family:'Playfair Display',serif;font-size:24px;letter-spacing:-.3px}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;margin-top:12px}
+  .fgrid .fl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .fgrid .fv{font-size:14px;font-weight:600;margin-top:2px}
+
+  .info-block h3{font-size:19px;margin-bottom:10px}
+  .info-list{margin:0;padding-left:2px;list-style:none}
+  .info-list li{margin:6px 0;font-size:14px;padding-left:16px;position:relative}
+  .info-list li:before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:var(--accent2)}
+  .info-content{font-size:14px;color:var(--text2);white-space:pre-wrap;line-height:1.65}
+  .price-tag{color:var(--good);font-weight:700}
+
+  .overlay{position:fixed;inset:0;background:rgba(5,8,12,.7);backdrop-filter:blur(6px);z-index:100;
+    display:flex;align-items:flex-start;justify-content:center;padding:44px 16px;overflow:auto;animation:fade .2s}
+  .modal{background:linear-gradient(180deg,var(--card),var(--elev));border:1px solid var(--border);border-radius:var(--radius);
+    width:100%;max-width:530px;box-shadow:var(--shadow-lg);animation:pop .28s cubic-bezier(.2,.7,.2,1)}
+  .modal-h{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--border2)}
+  .modal-b{padding:22px} .modal-f{display:flex;gap:11px;justify-content:flex-end;padding:0 22px 22px}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
+  .field .hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)}
+  .field input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:11px 13px;font-size:14.5px}
+  .field input:focus{outline:none;border-color:var(--accent)}
+  .field .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .err{color:var(--bad);font-size:13px;margin-top:6px}
+  .pop{position:absolute;right:0;top:42px;width:270px;z-index:50;padding:14px;background:linear-gradient(180deg,var(--card),var(--elev));
+    border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);animation:pop .2s}
+
+  .loading{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:14px}
+  .spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script id="seed-morocco" type="application/json">
+{
+  "slug": "morocco-2026",
+  "country": "Morocco",
+  "archived": false,
+  "heroImage": "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=1600&q=80",
+  "meta": {
+    "tripName": "Morocco",
+    "subtitle": "Toronto → Marrakech → Sahara → Essaouira → Home",
+    "startDate": "2026-09-20",
+    "endDate": "2026-09-30",
+    "stats": [
+      {"n": "11", "l": "days"},
+      {"n": "3", "l": "cities"},
+      {"n": "1", "l": "desert night"},
+      {"n": "2", "l": "flights"}
+    ]
+  },
+  "days": [
+    {
+      "id": "d1",
+      "date": "Sun, Sep 20",
+      "day": "Day 1",
+      "title": "Toronto → Casablanca",
+      "location": "Travel Day",
+      "type": "travel",
+      "emoji": "✈️",
+      "details": [
+        {"time": "8:00 PM", "text": "Arrive YYZ Terminal 3", "sub": "Grab duty-free: 1 L of alcohol each, cheaper than buying in Morocco"},
+        {"time": "10:25 PM", "text": "Depart Toronto YYZ → Casablanca", "sub": "Royal Air Maroc · 1 stop in CMN · overnight flight"}
+      ],
+      "tips": "Sleep on the plane. Have your riad's address written down for customs. Passport must be valid through at least March 2027.",
+      "accommodation": null,
+      "suggestions": []
+    },
+    {
+      "id": "d2",
+      "date": "Mon, Sep 21",
+      "day": "Day 2",
+      "title": "Land Marrakech",
+      "location": "Marrakech, Morocco",
+      "type": "travel",
+      "emoji": "🛬",
+      "details": [
+        {"time": "1:05 PM", "text": "Arrive Marrakech Menara (RAK)", "sub": "Grab an Inwi SIM at the airport (~$15 CAD). Avoid Orange."},
+        {"time": "~2:00 PM", "text": "Riad airport pickup", "sub": "Confirm with Riad De Vinci ahead of time"},
+        {"time": "~2:30 PM", "text": "Check in at Riad De Vinci", "sub": "3-night stay, medina location"},
+        {"time": "PM", "text": "Easy medina walk", "sub": "Wander, get oriented, don't push it"},
+        {"time": "Evening", "text": "Rooftop dinner at riad", "sub": "Early night, adjust to timezone"}
+      ],
+      "tips": "Insist on taxi meter (compteur) if using one. Google Maps works, ignore anyone offering directions.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Mint tea on rooftop", "Short Jemaa el-Fnaa peek at night"]
+    },
+    {
+      "id": "d3",
+      "date": "Tue, Sep 22",
+      "day": "Day 3",
+      "title": "Marrakech - Medina & Hammam",
+      "location": "Marrakech, Morocco",
+      "type": "explore",
+      "emoji": "🕌",
+      "details": [
+        {"time": "Morning", "text": "Bahia Palace & Saadian Tombs", "sub": "Beat the heat, arrive by 9 AM"},
+        {"time": "Midday", "text": "Souk crawl", "sub": "Souk Semmarine (textiles), Souk Cherratine (leather). Bargain, use walk-away trick"},
+        {"time": "PM", "text": "Hammam ritual", "sub": "Les Bains de Marrakech or Hammam de la Rose. Book through riad."},
+        {"time": "Sunset", "text": "Jemaa el-Fnaa from a rooftop", "sub": "Café des Épices or Terrasse des Épices for the view"},
+        {"time": "Evening", "text": "Dinner at Nomad", "sub": "Modern Moroccan, rooftop, book ahead"}
+      ],
+      "tips": "Tagine max 60 MAD, couscous max 60 MAD, anything more is a scam (per Sean's rule).",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Nomad dinner", "Café Clock lunch", "Le Salama for drinks"]
+    },
+    {
+      "id": "d4",
+      "date": "Wed, Sep 23",
+      "day": "Day 4",
+      "title": "Marrakech - Gardens & Nightlife",
+      "location": "Marrakech, Morocco",
+      "type": "explore",
+      "emoji": "🌿",
+      "details": [
+        {"time": "Morning", "text": "Jardin Majorelle", "sub": "Cobalt blue, palms, iconic. Book tickets online ahead."},
+        {"time": "Midday", "text": "Le Jardin lunch", "sub": "Courtyard garden restaurant in the medina"},
+        {"time": "PM", "text": "Mellah + rest at riad", "sub": "Explore the old Jewish quarter, then chill before dinner"},
+        {"time": "Evening", "text": "Dar Essalam dinner", "sub": "Sean's pick: oldest restaurant in Marrakech, live Moroccan music. BOOK AHEAD."},
+        {"time": "Night", "text": "Hivernage cocktails", "sub": "Kabana or +61 for post-dinner drinks"}
+      ],
+      "tips": "Sahara tour departs early tomorrow morning. Pack a small overnight bag, leave main suitcase at riad.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Kabana rooftop", "+61 natural wine", "Le Salama"]
+    },
+    {
+      "id": "d5",
+      "date": "Thu, Sep 24",
+      "day": "Day 5",
+      "title": "Sahara Day 1 - Atlas & Aït Ben Haddou",
+      "location": "Marrakech → Kelaat M'Gouna",
+      "type": "trek",
+      "emoji": "🏔️",
+      "details": [
+        {"time": "~7:00 AM", "text": "Sahara tour pickup at Riad De Vinci", "sub": "3-day tour, operator TBD (DM @toparadise.Morocco or book via GetYourGuide)"},
+        {"time": "AM", "text": "Cross High Atlas via Tizi n'Tichka Pass", "sub": "Berber villages, mountain views, photo stops"},
+        {"time": "Midday", "text": "Aït Ben Haddou (UNESCO)", "sub": "Ancient mud-brick kasbah. Game of Thrones + Gladiator filming location."},
+        {"time": "PM", "text": "Ouarzazate stop", "sub": "\"Hollywood of Africa\", quick cinema studio view"},
+        {"time": "PM", "text": "Road of 1001 Kasbahs", "sub": "Scenic drive to Kelaat M'Gouna"},
+        {"time": "Evening", "text": "Dinner + overnight at Hotel Kelaat M'Gouna", "sub": "Traditional Moroccan dinner included with tour"}
+      ],
+      "tips": "Bring layers. Small bag only. Cash for lunches (not included). Charge everything, limited power at desert camp tomorrow.",
+      "accommodation": "Hotel Kalaat M'Gouna (via Sahara tour)",
+      "suggestions": []
+    },
+    {
+      "id": "d6",
+      "date": "Fri, Sep 25",
+      "day": "Day 6",
+      "title": "Sahara Day 2 - Erg Chebbi Dunes",
+      "location": "Kelaat M'Gouna → Merzouga",
+      "type": "trek",
+      "emoji": "🐪",
+      "details": [
+        {"time": "AM", "text": "Todra Gorges walk", "sub": "Drive to Tinghir, walk through the oasis and gorges"},
+        {"time": "Midday", "text": "Lunch in Tinghir", "sub": "Local restaurant, buy own"},
+        {"time": "PM", "text": "Drive to Merzouga / Erg Chebbi", "sub": "Arrive in time for sunset activities"},
+        {"time": "Sunset", "text": "Camel trek + sandboarding", "sub": "Golden-hour ride into the dunes. Bring sunglasses and a scarf."},
+        {"time": "Evening", "text": "Luxury desert camp dinner + Berber drumming", "sub": "Dinner under the stars, live music by campfire. This is the moment."},
+        {"time": "Night", "text": "Sleep in luxury tent", "sub": "Confirm private bathroom in tent when booking"}
+      ],
+      "tips": "No alcohol at most desert camps. Cold at night (15-18C), warm layer essential.",
+      "accommodation": "Luxury Desert Camp (Erg Chebbi, Merzouga)",
+      "suggestions": ["Stargazing after dinner", "Sunrise dune climb"]
+    },
+    {
+      "id": "d7",
+      "date": "Sat, Sep 26",
+      "day": "Day 7",
+      "title": "Sahara Day 3 - Sunrise & Return",
+      "location": "Merzouga → Marrakech",
+      "type": "trek",
+      "emoji": "🌅",
+      "details": [
+        {"time": "~6:00 AM", "text": "Sunrise camel ride", "sub": "Climb a dune, watch the Sahara wake up"},
+        {"time": "~8:00 AM", "text": "Breakfast at camp", "sub": "Then depart for the return drive"},
+        {"time": "All day", "text": "Long drive back to Marrakech", "sub": "~10 hours with lunch stop. Brutal but expected."},
+        {"time": "~8:00 PM", "text": "Drop-off at Riad De Vinci", "sub": "Same riad, 1-night stay to recover"},
+        {"time": "Evening", "text": "Easy dinner near riad", "sub": "Do not attempt nightlife. Sleep."}
+      ],
+      "tips": "You will be exhausted. Order dinner delivery to the riad if needed. Big day tomorrow but nothing scheduled early.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": []
+    },
+    {
+      "id": "d8",
+      "date": "Sun, Sep 27",
+      "day": "Day 8",
+      "title": "Marrakech → Essaouira",
+      "location": "Marrakech → Essaouira",
+      "type": "travel",
+      "emoji": "🌊",
+      "details": [
+        {"time": "Morning", "text": "Slow morning at riad", "sub": "Rooftop breakfast, recovery"},
+        {"time": "~10:00 AM", "text": "Private driver pickup for Essaouira", "sub": "Book through riad, ~$100 CAD split with Prathab"},
+        {"time": "Midday", "text": "Argan oil cooperative stop", "sub": "Local women pressing argan by hand, real oil at fair prices"},
+        {"time": "En route", "text": "Goats-in-trees photo stop (optional)", "sub": "Touristy but iconic, ~5 min"},
+        {"time": "~1:30 PM", "text": "Arrive Essaouira, check in", "sub": "Riad TBD, book Booking.com asap (MOGA OFF pressure)"},
+        {"time": "PM", "text": "Port seafood lunch", "sub": "Pick your fish off the boats, they grill it. ~$15 CAD total."},
+        {"time": "Sunset", "text": "Walk the Skala ramparts", "sub": "Game of Thrones fans will recognize this. Cocktails at Taros after."},
+        {"time": "Evening", "text": "Dinner + live Gnawa music", "sub": "Taros rooftop, or La Table by Madada"}
+      ],
+      "tips": "MOGA Festival kicks off Sep 30 in Essaouira. Pre-parties (MOGA OFF) run in the medina Sep 27-29. Free house/techno + Gnaoua. Check mogafestival.com.",
+      "accommodation": "Essaouira Riad (TBD)",
+      "suggestions": ["Coast Cafe Essaouira (Sean's pick)", "Taros rooftop", "La Table by Madada"]
+    },
+    {
+      "id": "d9",
+      "date": "Mon, Sep 28",
+      "day": "Day 9",
+      "title": "Essaouira - Beach & Medina",
+      "location": "Essaouira, Morocco",
+      "type": "explore",
+      "emoji": "🏖️",
+      "details": [
+        {"time": "Morning", "text": "Slow cafe breakfast", "sub": "The whole city is walkable in an hour. No rush."},
+        {"time": "Midday", "text": "Beach walk + ocean time", "sub": "Camels on the beach if you want"},
+        {"time": "PM", "text": "Medina wandering + shopping", "sub": "Argan cosmetics, silver jewelry, art. Way less hustle than Marrakech."},
+        {"time": "Late PM", "text": "Sunset drinks on the ramparts", "sub": "Wine bars welcome, drinking is easier here than Marrakech"},
+        {"time": "Evening", "text": "Coast Cafe dinner", "sub": "Sean's specific pick. Book ahead."}
+      ],
+      "tips": "MOGA OFF parties in the medina tonight, wander and stumble into them. Free.",
+      "accommodation": "Essaouira Riad (TBD)",
+      "suggestions": ["Surf lesson (weather dependent)", "Skala fortress at golden hour", "Live Gnawa music"]
+    },
+    {
+      "id": "d10",
+      "date": "Tue, Sep 29",
+      "day": "Day 10",
+      "title": "Back to Marrakech - Final Night",
+      "location": "Essaouira → Marrakech",
+      "type": "explore",
+      "emoji": "🌆",
+      "details": [
+        {"time": "AM", "text": "Slow Essaouira morning", "sub": "Last coffee, last beach walk"},
+        {"time": "~12:00 PM", "text": "Supratours bus to Marrakech", "sub": "~150 MAD ($20 CAD) pp, book at markoub.ma"},
+        {"time": "~3:00 PM", "text": "Arrive Marrakech, check into Riad De Vinci", "sub": "1-night final stay, same riad"},
+        {"time": "PM", "text": "Final souk run + hammam #2", "sub": "Last chance for gifts and pampering"},
+        {"time": "Evening", "text": "Splurge dinner", "sub": "Le Jardin, La Mamounia, or wherever you fell in love with"},
+        {"time": "Night", "text": "Hivernage nightlife or riad rooftop", "sub": "Last night, make it good"}
+      ],
+      "tips": "Pack tonight. Exchange leftover MAD (can't take more than 1000 out). Confirm airport transfer for tomorrow.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Rooftop nightcap at riad", "One last mint tea"]
+    },
+    {
+      "id": "d11",
+      "date": "Wed, Sep 30",
+      "day": "Day 11",
+      "title": "Marrakech → Toronto",
+      "location": "Travel Day",
+      "type": "travel",
+      "emoji": "🏠",
+      "details": [
+        {"time": "Morning", "text": "Slow breakfast, pack out", "sub": "Airport transfer via riad, ~$25 CAD"},
+        {"time": "~11:30 AM", "text": "Depart for RAK airport", "sub": "Arrive 2 hours early for international"},
+        {"time": "1:45 PM", "text": "Flight RAK → Casablanca", "sub": "Royal Air Maroc, stop in CMN"},
+        {"time": "~5:00 PM", "text": "Depart CMN → Toronto", "sub": "RAM direct-ish leg"},
+        {"time": "8:10 PM", "text": "Arrive YYZ", "sub": "Welcome home 🇨🇦"}
+      ],
+      "tips": "Non-refundable flight. Get to CMN well ahead. Exchange remaining MAD before leaving the airport.",
+      "accommodation": null,
+      "suggestions": []
+    }
+  ],
+  "flights": [
+    {
+      "id": "f1",
+      "date": "Sun, Sep 20",
+      "airline": "Royal Air Maroc",
+      "route": "YYZ → CMN → RAK",
+      "flight": "AT 211 + AT 411",
+      "depart": "10:25 PM YYZ",
+      "arrive": "1:05 PM RAK (Sep 21)",
+      "duration": "9h 40m",
+      "stop": "1h 10m in CMN",
+      "cost": "$1,136.25 CAD (roundtrip, incl. baggage)",
+      "confirmation": "TBD after booking"
+    },
+    {
+      "id": "f2",
+      "date": "Wed, Sep 30",
+      "airline": "Royal Air Maroc",
+      "route": "RAK → CMN → YYZ",
+      "flight": "AT 410 + AT 210",
+      "depart": "1:45 PM RAK",
+      "arrive": "8:10 PM YYZ",
+      "duration": "11h 25m",
+      "stop": "2h 0m in CMN",
+      "cost": "included in roundtrip",
+      "confirmation": "TBD after booking"
+    }
+  ],
+  "flnotes": "RAM only flies YYZ↔CMN direct on Wed/Fri/Sun. Baggage included (23kg each way). Non-refundable, date changes have a fee. Buy travel insurance.",
+  "packing": {
+    "clothing": [
+      "5x t-shirts (light, breathable)",
+      "2x button-up or nicer shirt (rooftop dinners)",
+      "1x lightweight sweater or hoodie (desert night)",
+      "1x rain shell (unlikely rain but small)",
+      "2x pants (1 light, 1 nicer)",
+      "1x shorts",
+      "Swim shorts (riad pool)",
+      "Underwear + socks (7 days worth)",
+      "Comfortable walking shoes (uneven medina streets)",
+      "1x sandals or slides",
+      "Sunglasses",
+      "Sun hat or cap",
+      "Scarf (also for dust in desert)"
+    ],
+    "tech": [
+      "European Type C/E plug adapter (2 round prongs)",
+      "Power bank",
+      "Phone charger + cable",
+      "Camera / DSLR (optional)",
+      "Headphones",
+      "Small day backpack"
+    ],
+    "docs": [
+      "Passport (valid through March 2027)",
+      "Physical + digital copies of flight confirmations",
+      "Physical + digital copies of riad bookings",
+      "Physical + digital copies of Sahara tour booking",
+      "Travel insurance policy",
+      "No-FX-fee credit card (Scotiabank Passport, EQ Bank, Wise)",
+      "$200-300 CAD backup cash",
+      "Written address of Riad De Vinci (for customs)"
+    ],
+    "misc": [
+      "Sunscreen (high SPF)",
+      "Lip balm with SPF",
+      "Basic meds (Imodium, Advil, Tums)",
+      "Reusable water bottle",
+      "Small toiletry kit",
+      "Wet wipes (desert use)",
+      "Duty-free alcohol (1 L pp allowed into Morocco)"
+    ]
+  },
+  "checked": {},
+  "quests": [
+    {"id": "q1", "text": "Sunset from a rooftop at Jemaa el-Fnaa", "category": "cultural", "done": false, "city": "marrakech"},
+    {"id": "q2", "text": "Full hammam ritual (scrub + massage)", "category": "cultural", "done": false, "city": "marrakech"},
+    {"id": "q3", "text": "Dinner at Dar Essalam with live music", "category": "food", "done": false, "city": "marrakech"},
+    {"id": "q4", "text": "Bargain successfully with the walk-away trick", "category": "cultural", "done": false, "city": "marrakech"},
+    {"id": "q5", "text": "Camel ride into Erg Chebbi at sunset", "category": "adventure", "done": false, "city": "merzouga"},
+    {"id": "q6", "text": "Sleep under the stars in the desert", "category": "adventure", "done": false, "city": "merzouga"},
+    {"id": "q7", "text": "Sunrise over the dunes", "category": "adventure", "done": false, "city": "merzouga"},
+    {"id": "q8", "text": "Sandboarding on the dunes", "category": "activity", "done": false, "city": "merzouga"},
+    {"id": "q9", "text": "Fresh grilled fish at Essaouira port", "category": "food", "done": false, "city": "essaouira"},
+    {"id": "q10", "text": "Walk the Skala ramparts at sunset", "category": "cultural", "done": false, "city": "essaouira"},
+    {"id": "q11", "text": "Catch a MOGA OFF party in the Essaouira medina", "category": "activity", "done": false, "city": "essaouira"},
+    {"id": "q12", "text": "Try tagine with caramel prunes + beef + almonds (Sean's pick)", "category": "food", "done": false, "city": "any"},
+    {"id": "q13", "text": "Msemen breakfast from a street vendor", "category": "food", "done": false, "city": "any"},
+    {"id": "q14", "text": "Couscous on a Friday (like locals)", "category": "food", "done": false, "city": "any"},
+    {"id": "q15", "text": "Fresh OJ at Jemaa el-Fnaa (4-5 MAD)", "category": "food", "done": false, "city": "marrakech"}
+  ],
+  "hotelCoords": {
+    "marrakech": {"lat": 31.6295, "lon": -7.9891, "name": "Riad De Vinci"},
+    "essaouira": {"lat": 31.5085, "lon": -9.7595, "name": "Essaouira Riad"},
+    "merzouga": {"lat": 31.0977, "lon": -4.0086, "name": "Luxury Desert Camp"}
+  },
+  "cityCoords": {
+    "marrakech": {"lat": 31.6295, "lon": -7.9811},
+    "essaouira": {"lat": 31.5085, "lon": -9.7595},
+    "merzouga": {"lat": 31.0977, "lon": -4.0086},
+    "casablanca": {"lat": 33.5731, "lon": -7.5898},
+    "ouarzazate": {"lat": 30.9189, "lon": -6.8934},
+    "kelaat mgouna": {"lat": 31.2333, "lon": -6.1333},
+    "tinghir": {"lat": 31.5145, "lon": -5.5330}
+  },
+  "flags": {
+    "toronto": "🇨🇦",
+    "canada": "🇨🇦",
+    "yyz": "🇨🇦",
+    "morocco": "🇲🇦",
+    "marrakech": "🇲🇦",
+    "rak": "🇲🇦",
+    "casablanca": "🇲🇦",
+    "cmn": "🇲🇦",
+    "essaouira": "🇲🇦",
+    "merzouga": "🇲🇦",
+    "sahara": "🇲🇦",
+    "ouarzazate": "🇲🇦"
+  },
+  "info": {
+    "currency": {
+      "name": "Moroccan Dirham (MAD)",
+      "rate": "~7 MAD = 1 CAD",
+      "notes": "Closed currency, cannot export more than 1000 MAD. Always pay in MAD not CAD (avoids Dynamic Currency Conversion fee of 7-10%). Best ATM: BMCI (4000 MAD limit, 35 MAD fee)."
+    },
+    "language": {
+      "primary": "Arabic Darija and French",
+      "tourist_areas": "English widely spoken",
+      "useful_phrases": [
+        "Salaam alaikum - hello",
+        "Shukran - thank you",
+        "La, shukran - no, thank you (for henna ladies)",
+        "Compteur, s'il vous plaît - meter, please (for taxis)",
+        "Bshhal? - how much?"
+      ]
+    },
+    "sim_card": "Inwi (avoid Orange). Get at RAK airport, ~$15 CAD.",
+    "tipping": {
+      "restaurants": "5-10% if no service charge",
+      "porter": "10-20 MAD per bag",
+      "half_day_guide": "50-100 MAD",
+      "hammam_attendant": "20-50 MAD",
+      "taxi": "Round up"
+    },
+    "drinking": "Legal for non-Muslims in licensed venues (bars, restaurants, hotels). No public street drinking. Buy duty-free at YYZ (1 L pp). Big supermarkets (Carrefour, Acima) have alcohol sections. Riad De Vinci: confirm policy on rooftop drinking when checking in.",
+    "food_price_ceilings": {
+      "tagine": "40-60 MAD max, more = scam",
+      "msemen": "3-5 MAD",
+      "harira": "6-10 MAD",
+      "couscous": "60 MAD max, more = scam",
+      "fresh_oj_at_jemaa": "4-5 MAD"
+    },
+    "scams_to_expect": [
+      "'The square is closed' - it isn't, walk past",
+      "Free henna - not free, will demand 200-500 MAD",
+      "Taxi meter broken - walk to next taxi",
+      "Directions from strangers - they'll ask for money after, use Google Maps",
+      "Snake charmers at Jemaa - don't take photos unless you want to pay"
+    ],
+    "weather_expectations": {
+      "marrakech_days": "28-34 C",
+      "marrakech_nights": "16-20 C",
+      "essaouira": "22-26 C with ocean breeze",
+      "sahara_night": "5-15 C (bring a layer)"
+    },
+    "moga_festival": "Sep 30 - Oct 4, 2026 at Sofitel Mogador. MOGA OFF pre-parties run in the Essaouira medina Sep 27-29 (our dates). Electronic music blended with Gnaoua. Free medina parties, ticketed main event.",
+    "seans_notes": {
+      "source": "Sean, a Moroccan friend",
+      "key_rules": [
+        "Always bargain in markets, use the walk-away trick",
+        "Ignore strangers offering directions",
+        "Taxi meter must be on before you get in",
+        "Amazigh > Berber (more respectful)",
+        "Friday is cultural Sunday, but tourist areas run 7/7"
+      ],
+      "specific_spots": [
+        "Dar Essalam (Marrakech): oldest restaurant, live music",
+        "Café Clock (Marrakech + Chefchaouen + Fez): casual, camel burger",
+        "The Coast Cafe (Essaouira): specific pick",
+        "@toparadise.Morocco on Instagram: small-group Sahara tours"
+      ]
+    }
+  },
+  "bookings": [
+    {"id": "b1", "type": "flight", "vendor": "Royal Air Maroc", "status": "not_booked", "cost": "$1,136 CAD pp", "notes": "Book within next 2 weeks"},
+    {"id": "b2", "type": "riad", "vendor": "Riad De Vinci (Marrakech)", "status": "not_booked", "cost": "~$140/night x 5 nights split", "notes": "Book Sep 21-24, Sep 26-27, Sep 29-30 as 3 separate bookings. Email for luggage hold + same room."},
+    {"id": "b3", "type": "riad", "vendor": "Essaouira riad (TBD)", "status": "not_booked", "cost": "~$100/night x 2", "notes": "URGENT: book within 48 hours due to MOGA OFF availability pressure. Consider Riad Dar Maya or Villa Maroc."},
+    {"id": "b4", "type": "tour", "vendor": "Sahara tour operator", "status": "not_booked", "cost": "$185-310 CAD pp (luxury camp tier)", "notes": "DM @toparadise.Morocco first. Fallback to GetYourGuide luxury camp option."},
+    {"id": "b5", "type": "transport", "vendor": "Private driver Marrakech → Essaouira", "status": "not_booked", "cost": "~$100 CAD total split", "notes": "Book via Riad De Vinci 2 weeks before"},
+    {"id": "b6", "type": "transport", "vendor": "Supratours bus Essaouira → Marrakech", "status": "not_booked", "cost": "~$40 CAD total", "notes": "Book early September via markoub.ma (bus systems only allow booking 30-60 days out)"},
+    {"id": "b7", "type": "dining", "vendor": "Dar Essalam reservation", "status": "not_booked", "cost": "TBD", "notes": "Book 1-2 weeks before trip for Wed Sep 23 dinner"},
+    {"id": "b8", "type": "insurance", "vendor": "Travel insurance", "status": "not_booked", "cost": "~$50 CAD pp", "notes": "Non-refundable flight = insurance essential"}
+  ],
+  "budget_estimate": {
+    "per_person_cad": {
+      "flight": 1136,
+      "accommodation_marrakech": 350,
+      "accommodation_essaouira": 100,
+      "sahara_tour": 300,
+      "food": 250,
+      "drinks": 200,
+      "transport_local": 75,
+      "hammam_spa": 80,
+      "activities": 100,
+      "tips_misc": 100,
+      "shopping": 150,
+      "total_low": 2500,
+      "total_mid": 2900,
+      "total_high": 3400
+    }
+  }
+}
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ============ FIREBASE ============ */
+const FIREBASE_CONFIG = {
+  apiKey:"AIzaSyDAcbCNhqY2TG2zqUpOWbaGBGq1o7hxet4",
+  authDomain:"travel-app-277ca.firebaseapp.com",
+  projectId:"travel-app-277ca",
+  storageBucket:"travel-app-277ca.firebasestorage.app",
+  messagingSenderId:"778858870676",
+  appId:"1:778858870676:web:70aa64cd6171fbbff3c181"
+};
+const FIREBASE_ON = !!FIREBASE_CONFIG.projectId;
+let fb = null;
+function initFirebase(){
+  if(!FIREBASE_ON || fb) return fb;
+  try{ const app=firebase.initializeApp(FIREBASE_CONFIG); fb={db:firebase.firestore(app)}; }
+  catch(e){ console.warn("Firebase init failed:",e); fb=null; }
+  return fb;
+}
+
+/* ============ FLAGS / COUNTRY ============ */
+const FLAGS={morocco:"🇲🇦",peru:"🇵🇪",japan:"🇯🇵",canada:"🇨🇦",france:"🇫🇷",spain:"🇪🇸",italy:"🇮🇹",portugal:"🇵🇹",mexico:"🇲🇽",thailand:"🇹🇭",vietnam:"🇻🇳",indonesia:"🇮🇩",india:"🇮🇳",greece:"🇬🇷",turkey:"🇹🇷",egypt:"🇪🇬",usa:"🇺🇸",uk:"🇬🇧",germany:"🇩🇪",brazil:"🇧🇷",argentina:"🇦🇷",iceland:"🇮🇸",colombia:"🇨🇴"};
+const CODES={morocco:"ma",peru:"pe",japan:"jp",canada:"ca",france:"fr",spain:"es",italy:"it",portugal:"pt",mexico:"mx",thailand:"th",vietnam:"vn",indonesia:"id",india:"in",greece:"gr",turkey:"tr",egypt:"eg",usa:"us","united states":"us",uk:"gb","united kingdom":"gb",germany:"de",brazil:"br",argentina:"ar",iceland:"is",norway:"no",colombia:"co",chile:"cl","south africa":"za",kenya:"ke",jordan:"jo",uae:"ae",australia:"au","new zealand":"nz",netherlands:"nl",croatia:"hr",ireland:"ie"};
+const CITY_TO_COUNTRY={lima:"Peru",cusco:"Peru","machu picchu":"Peru","sacred valley":"Peru",marrakech:"Morocco",essaouira:"Morocco",sahara:"Morocco",merzouga:"Morocco",casablanca:"Morocco",tokyo:"Japan",kyoto:"Japan",osaka:"Japan",paris:"France",rome:"Italy",barcelona:"Spain",lisbon:"Portugal",bangkok:"Thailand",bali:"Indonesia"};
+const DEFAULT_HERO={
+  morocco:"https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=1600&q=80",
+  peru:"https://images.unsplash.com/photo-1526392060635-9d6019884377?w=1600&q=80",
+  japan:"https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1600&q=80",
+  france:"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1600&q=80",
+  italy:"https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&q=80"
+};
+function detectCountry(trip){
+  if(trip.country) return trip.country;
+  const hay=(((trip.meta&&(trip.meta.tripName+" "+trip.meta.subtitle))||"")+" "+(trip.slug||"")).toLowerCase();
+  for(const k in CITY_TO_COUNTRY){ if(hay.includes(k)) return CITY_TO_COUNTRY[k]; }
+  for(const k in CODES){ if(hay.includes(k)) return k.charAt(0).toUpperCase()+k.slice(1); }
+  return "";
+}
+function flagFor(c){ if(!c) return "🌍"; return FLAGS[c.trim().toLowerCase()]||"🌍"; }
+function heroFor(trip,country){
+  if(trip.heroImage) return trip.heroImage;
+  const c=(country||"").trim().toLowerCase();
+  return DEFAULT_HERO[c]||"";
+}
+function Flag({country,big}){
+  const [err,setErr]=useState(false);
+  const code=CODES[(country||"").trim().toLowerCase()];
+  if(code&&!err) return <img src={`https://flagcdn.com/${code}.svg`} alt={country||""} className="flagimg" style={{height:big?27:20}} onError={()=>setErr(true)}/>;
+  return <span style={{fontSize:big?24:18}}>{flagFor(country)}</span>;
+}
+
+/* ============ CONFIG TABLES ============ */
+const TC={travel:{label:"Transit"},explore:{label:"Explore"},trek:{label:"Trek"},flex:{label:"Flex"}};
+const TYPE_ORDER=["travel","explore","trek","flex"];
+const CATS={
+  adventure:{c:"#ef9350",label:"Adventure"}, cultural:{c:"#b18cf0",label:"Cultural"},
+  food:{c:"#e6b566",label:"Food"}, activity:{c:"#78bbff",label:"Activity"},
+  restaurant:{c:"#f4776a",label:"Food & Drink"}, sight:{c:"#55c98a",label:"Sights"}
+};
+const CAT_ORDER=Object.keys(CATS);
+function packIcon(name){
+  const n=(name||"").toLowerCase();
+  if(/cloth|wear|outfit/.test(n))return"👕"; if(/tech|electro|charg/.test(n))return"🔌";
+  if(/doc|money|passport/.test(n))return"📄"; if(/trek|hik|essential/.test(n))return"🥾";
+  if(/gear/.test(n))return"🎒"; if(/hygiene|toilet|health/.test(n))return"🧴";
+  return"🧳";
+}
+
+/* ============ STORAGE ============ */
+const LS_INDEX="travelapp:slugs", LS_TRIP=(s)=>`travelapp:trip:${s}`;
+function normalize(id,data){
+  const d=Object.assign({},data);
+  d.slug=d.slug||id;
+  if(!d.meta) d.meta={tripName:id,subtitle:"",startDate:"",endDate:"",stats:[]};
+  d.country=d.country||detectCountry(d);
+  return d;
+}
+const store={
+  listSlugs(){ try{return JSON.parse(localStorage.getItem(LS_INDEX))||[];}catch{return[];} },
+  _saveIndex(s){ localStorage.setItem(LS_INDEX,JSON.stringify([...new Set(s)])); },
+  loadTrip(s){ try{return JSON.parse(localStorage.getItem(LS_TRIP(s)));}catch{return null;} },
+  putLocal(s,data){ localStorage.setItem(LS_TRIP(s),JSON.stringify(data)); const i=store.listSlugs(); if(!i.includes(s)){i.push(s);store._saveIndex(i);} },
+  saveTrip(s,data){
+    store.putLocal(s,data);
+    if(FIREBASE_ON&&fb) fb.db.collection("trips").doc(s).set(data,{merge:true}).catch(e=>console.warn("cloud save failed",e));
+  },
+  deleteTrip(s){
+    localStorage.removeItem(LS_TRIP(s)); store._saveIndex(store.listSlugs().filter(x=>x!==s));
+    if(FIREBASE_ON&&fb) fb.db.collection("trips").doc(s).delete().catch(()=>{});
+  }
+};
+function ensureSeed(){
+  try{
+    const seed=JSON.parse(document.getElementById("seed-morocco").textContent);
+    if(!store.loadTrip(seed.slug)){ seed.createdAt=seed.createdAt||Date.now(); store.saveTrip(seed.slug,seed); }
+  }catch(e){ console.warn("seed failed",e); }
+}
+
+/* ============ ROUTING / HELPERS ============ */
+function useRoute(){
+  const [slug,setSlug]=useState(()=>new URLSearchParams(location.search).get("trip")||null);
+  useEffect(()=>{ const on=()=>setSlug(new URLSearchParams(location.search).get("trip")||null);
+    window.addEventListener("popstate",on); return()=>window.removeEventListener("popstate",on); },[]);
+  const go=useCallback((s)=>{ history.pushState({},"",s?`${location.pathname}?trip=${encodeURIComponent(s)}`:location.pathname); setSlug(s); window.scrollTo(0,0); },[]);
+  return [slug,go];
+}
+const uid=(p="id")=>p+Math.random().toString(36).slice(2,9);
+function slugify(name,end){ const y=(end||"").slice(0,4)||(name.match(/\b(20\d{2})\b/)||[])[1]||""; const b=name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); return y?`${b}-${y}`:b; }
+const ML=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function fmtRange(a,b){ if(!a) return ""; const s=new Date(a+"T00:00:00"); if(isNaN(s)) return `${a}${b?" - "+b:""}`;
+  const e=b?new Date(b+"T00:00:00"):null; const f=(d)=>ML[d.getMonth()].slice(0,3)+" "+d.getDate();
+  if(!e) return f(s)+", "+s.getFullYear(); return `${f(s)} - ${f(e)}, ${e.getFullYear()}`; }
+function countdown(a,b){ if(!a) return null; const t=new Date(); t.setHours(0,0,0,0);
+  const s=new Date(a+"T00:00:00"), e=new Date((b||a)+"T00:00:00"); if(isNaN(s)) return null; const D=86400000;
+  if(t<s){ const n=Math.round((s-t)/D); return {label:n===0?"Starts tomorrow":`In ${n} day${n>1?"s":""}`,tone:"soon",upcoming:true}; }
+  if(t<=e){ const d=Math.round((t-s)/D)+1, tot=Math.round((e-s)/D)+1; return {label:`Day ${d} of ${tot}`,tone:"now",upcoming:true}; }
+  return {label:"Completed",tone:"past",upcoming:false}; }
+function haversine(a,b){ if(!a||!b) return null; const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLon=(b.lon-a.lon)*Math.PI/180,la1=a.lat*Math.PI/180,la2=b.lat*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2; return Math.round(R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))); }
+const WMO={0:["☀️","clear"],1:["🌤️","mainly clear"],2:["⛅","partly cloudy"],3:["☁️","overcast"],45:["🌫️","fog"],48:["🌫️","fog"],51:["🌦️","drizzle"],53:["🌦️","drizzle"],55:["🌦️","drizzle"],61:["🌧️","rain"],63:["🌧️","rain"],65:["🌧️","heavy rain"],71:["🌨️","snow"],73:["🌨️","snow"],75:["❄️","snow"],80:["🌦️","showers"],81:["🌦️","showers"],82:["⛈️","heavy showers"],95:["⛈️","storm"],96:["⛈️","storm"],99:["⛈️","storm"]};
+const wmo=(c)=>WMO[c]||["🌡️","-"];
+function weekdayShort(dateStr){ const m={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const c=(dateStr||"").replace(/^[A-Za-z]+,\s*/,"").trim().split(" "); if(c.length<2) return {w:"",n:dateStr||""};
+  const mo=m[(c[0]||"").slice(0,3).toLowerCase()], day=parseInt(c[1]); if(mo==null||isNaN(day)) return {w:"",n:dateStr};
+  const d=new Date(2026,mo,day); return {w:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()], n:String(day)}; }
+
+/* ============ EDITABLE ============ */
+function Editable({value,onChange,placeholder="",className="",multiline=false,tag="span"}){
+  const ref=useRef(null); const Tag=tag;
+  const commit=()=>{ const t=ref.current.innerText.replace(/\n+$/,""); if(t!==(value||"")) onChange(t); };
+  useEffect(()=>{ if(ref.current&&ref.current.innerText!==(value||"")) ref.current.innerText=value||""; },[value]);
+  return <Tag ref={ref} className={`ed ${!value?"empty":""} ${className}`} data-ph={placeholder} contentEditable suppressContentEditableWarning
+    onBlur={commit} onKeyDown={(e)=>{ if(!multiline&&e.key==="Enter"){e.preventDefault();e.target.blur();} }}>{value||""}</Tag>;
+}
+
+/* ============ APP ============ */
+function App(){
+  const [slug,go]=useRoute();
+  const [ready,setReady]=useState(false);
+  useEffect(()=>{ initFirebase(); ensureSeed(); setReady(true); },[]);
+  if(!ready) return <div className="loading"><div className="spinner"/>Loading…</div>;
+  return slug ? <TripDetail slug={slug} go={go}/> : <Homepage go={go}/>;
+}
+
+/* ============ HOMEPAGE ============ */
+function Homepage({go}){
+  const [trips,setTrips]=useState([]);
+  const [showArchived,setShowArchived]=useState(false);
+  const [modal,setModal]=useState(false);
+  const [status,setStatus]=useState(FIREBASE_ON?"saving":"local");
+
+  const refresh=useCallback(()=>{ const l=store.listSlugs().map(s=>store.loadTrip(s)).filter(Boolean).map(t=>normalize(t.slug,t)); setTrips(l); },[]);
+  useEffect(()=>{ refresh(); },[refresh]);
+  useEffect(()=>{
+    if(!(FIREBASE_ON&&fb)) return;
+    const unsub=fb.db.collection("trips").onSnapshot(snap=>{
+      snap.forEach(doc=>{ const d=normalize(doc.id,doc.data()); store.putLocal(doc.id,d); });
+      setStatus("live"); refresh();
+    }, e=>{ console.warn(e); setStatus("error"); });
+    return()=>unsub();
+  },[refresh]);
+
+  const visible=trips.filter(t=>showArchived?true:!t.archived);
+  const archivedCount=trips.filter(t=>t.archived).length;
+  const withCd=visible.map(t=>({t,cd:countdown(t.meta?.startDate,t.meta?.endDate)}));
+  const upcoming=withCd.filter(x=>!x.cd||x.cd.upcoming).sort((a,b)=>(a.t.meta?.startDate||"").localeCompare(b.t.meta?.startDate||""));
+  const past=withCd.filter(x=>x.cd&&!x.cd.upcoming).sort((a,b)=>(b.t.meta?.startDate||"").localeCompare(a.t.meta?.startDate||""));
+
+  return (
+    <div className="wrap">
+      <div className="topbar">
+        <div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+          {archivedCount>0 && <button className="btn ghost sm" onClick={()=>setShowArchived(v=>!v)}>{showArchived?"Hide":"Show"} archived ({archivedCount})</button>}
+          <span className="syncbadge"><span className={"dot "+status}/>{status==="live"?"Live sync":status==="error"?"Offline":status==="saving"?"Connecting…":"Local only"}</span>
+        </div>
+      </div>
+
+      <div className="home-hero rise">
+        <h1>Where to next?</h1>
+        <p>Every itinerary, flight, packing list, and must-do, synced across your devices and everyone on the trip.</p>
+      </div>
+
+      {upcoming.length>0 && <div className="group-label">Upcoming</div>}
+      <div className="tiles">
+        {upcoming.map(({t,cd},i)=><TripTile key={t.slug} trip={t} cd={cd} i={i} onClick={()=>go(t.slug)}/>)}
+        <div className="tile new rise" onClick={()=>setModal(true)}>
+          <div className="np"><div className="plus">+</div><div style={{fontWeight:600}}>New Trip</div></div>
+        </div>
+      </div>
+
+      {past.length>0 && <><div className="group-label">Past</div>
+        <div className="tiles">{past.map(({t,cd},i)=><TripTile key={t.slug} trip={t} cd={cd} i={i} onClick={()=>go(t.slug)}/>)}</div></>}
+
+      {visible.length===0 && <div className="empty">No trips yet. Create your first one.</div>}
+      <div style={{height:50}}/>
+      {modal && <NewTripModal onClose={()=>setModal(false)} onCreated={(s)=>{setModal(false);go(s);}}/>}
+    </div>
+  );
+}
+function TripTile({trip,cd,i,onClick}){
+  const m=trip.meta||{}; const country=trip.country||detectCountry(trip); const hero=heroFor(trip,country);
+  const stats=(m.stats||[]).slice(0,3);
+  return (
+    <div className="tile rise" style={{animationDelay:(i*60)+"ms"}} onClick={onClick}>
+      <div className="bg" style={{backgroundImage:hero?`url("${hero}")`:"linear-gradient(145deg,#1f6feb55,#a371f755)"}}/>
+      <div className="grad"/><div className="ring"/>
+      <div className="top">
+        <Flag country={country} big/>
+        <div style={{display:"flex",gap:6}}>
+          {trip.archived && <span className="chip past">Archived</span>}
+          {cd && <span className={"chip "+cd.tone}>{cd.label}</span>}
+        </div>
+      </div>
+      <div className="content">
+        <h2>{m.tripName||trip.slug}</h2>
+        <div className="sub">{fmtRange(m.startDate,m.endDate)||m.subtitle}</div>
+        {stats.length>0 && <div className="stats">{stats.map((s,j)=><div className="s" key={j}><b>{s.n}</b><span>{s.l}</span></div>)}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ============ NEW TRIP MODAL ============ */
+function NewTripModal({onClose,onCreated}){
+  const [f,setF]=useState({name:"",subtitle:"",country:"",start:"",end:"",hero:"",slug:""});
+  const [touched,setTouched]=useState(false); const [err,setErr]=useState("");
+  const set=(k)=>(e)=>setF(p=>({...p,[k]:e.target.value}));
+  const autoSlug=touched?f.slug:slugify(f.name,f.end);
+  const save=()=>{
+    if(!f.name.trim()) return setErr("Trip name is required.");
+    if(!f.start||!f.end) return setErr("Start and end dates are required.");
+    if(!f.country.trim()) return setErr("Country is required.");
+    const slug=(autoSlug||"").trim(); if(!slug) return setErr("Add a slug.");
+    if(store.loadTrip(slug)) return setErr(`A trip "${slug}" already exists. Change the slug.`);
+    store.saveTrip(slug,{slug,country:f.country.trim(),archived:false,createdAt:Date.now(),heroImage:f.hero.trim(),
+      meta:{tripName:f.name.trim(),subtitle:f.subtitle.trim(),startDate:f.start,endDate:f.end,stats:[]},
+      days:[],flights:[],flnotes:"",packing:{Clothing:[],Tech:[],"Docs & Money":[],Misc:[]},checked:{},quests:[],hotelCoords:{},cityCoords:{},info:[]});
+    onCreated(slug);
+  };
+  return (
+    <div className="overlay" onMouseDown={(e)=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal">
+        <div className="modal-h"><h2 style={{fontSize:24}}>New Trip</h2><button className="icon-btn" onClick={onClose}>✕</button></div>
+        <div className="modal-b">
+          <div className="field"><label>Trip name</label><input value={f.name} onChange={set("name")} placeholder="Japan" autoFocus/></div>
+          <div className="field"><label>Subtitle <span className="hint">(optional)</span></label><input value={f.subtitle} onChange={set("subtitle")} placeholder="Tokyo, Kyoto, Osaka"/></div>
+          <div className="field"><label>Country</label><input value={f.country} onChange={set("country")} placeholder="Japan"/></div>
+          <div className="field"><label>Dates</label><div className="row2"><input type="date" value={f.start} onChange={set("start")}/><input type="date" value={f.end} onChange={set("end")}/></div></div>
+          <div className="field"><label>Hero image URL <span className="hint">(optional, we pick one if blank)</span></label><input value={f.hero} onChange={set("hero")} placeholder="https://images.unsplash.com/..."/></div>
+          <div className="field"><label>Slug <span className="hint">(the ?trip= id)</span></label><input value={autoSlug} onChange={(e)=>{setTouched(true);setF(p=>({...p,slug:e.target.value}));}}/></div>
+          {err && <div className="err">{err}</div>}
+        </div>
+        <div className="modal-f"><button className="btn ghost" onClick={onClose}>Cancel</button><button className="btn primary" onClick={save}>Create trip</button></div>
+      </div>
+    </div>
+  );
+}
+
+/* ============ TRIP DETAIL ============ */
+const TABS=[{k:"itinerary",label:"Itinerary",icon:"🗺️"},{k:"flights",label:"Flights",icon:"✈️"},{k:"packing",label:"Packing",icon:"🎒"},{k:"quests",label:"Quests",icon:"⚔️"},{k:"info",label:"Info",icon:"📔"}];
+function TripDetail({slug,go}){
+  const [trip,setTrip]=useState(()=>{ const t=store.loadTrip(slug); return t?normalize(slug,t):null; });
+  const [tab,setTab]=useState("itinerary");
+  const [saveState,setSaveState]=useState("idle");
+  const [menu,setMenu]=useState(false);
+  const timer=useRef(null);
+  const savingRef=useRef(false);
+
+  useEffect(()=>{
+    if(!(FIREBASE_ON&&fb)) return;
+    const unsub=fb.db.collection("trips").doc(slug).onSnapshot(doc=>{ if(doc.exists&&!savingRef.current){ const d=normalize(slug,doc.data()); store.putLocal(slug,d); setTrip(d); } });
+    return()=>unsub();
+  },[slug]);
+
+  const update=useCallback((mut)=>{ setTrip(prev=>{ const next=typeof mut==="function"?mut(structuredClone(prev)):mut;
+    setSaveState("saving"); savingRef.current=true; clearTimeout(timer.current);
+    timer.current=setTimeout(()=>{ store.saveTrip(slug,next); setSaveState("idle"); savingRef.current=false; },700); return next; }); },[slug]);
+
+  if(!trip) return <div className="wrap loading"><p>Trip “{slug}” not found.</p><button className="btn" onClick={()=>go(null)}>← Back to trips</button></div>;
+  const m=trip.meta||{}; const country=trip.country||detectCountry(trip); const hero=heroFor(trip,country); const cd=countdown(m.startDate,m.endDate);
+
+  return (
+    <div>
+      <div className="hero">
+        <div className="bg" style={{backgroundImage:hero?`url("${hero}")`:"linear-gradient(145deg,#1f6feb66,#a371f766)"}}/>
+        <div className="grad"/>
+        <div className="top"><div className="wrap">
+          <button className="btn sm" onClick={()=>go(null)}>← Trips</button>
+          <div style={{position:"relative",display:"flex",gap:8}}>
+            <span className="syncbadge"><span className={"dot "+(saveState==="saving"?"saving":(FIREBASE_ON?"live":"local"))}/>{saveState==="saving"?"Saving…":(FIREBASE_ON?"Live sync":"Saved locally")}</span>
+            <button className="btn sm" onClick={()=>setMenu(v=>!v)}>⚙︎</button>
+            {menu && <SettingsMenu trip={trip} country={country} update={update} onDelete={()=>{store.deleteTrip(slug);go(null);}} close={()=>setMenu(false)}/>}
+          </div>
+        </div></div>
+        <div className="htext"><div className="wrap"><div className="inner">
+          <div className="line1"><Flag country={country} big/>{cd && <span className={"chip "+cd.tone}>{cd.label}</span>}</div>
+          <h1><Editable value={m.tripName} onChange={v=>update(t=>{t.meta.tripName=v;return t;})} placeholder="Trip name"/></h1>
+          <div className="sub"><Editable value={m.subtitle} onChange={v=>update(t=>{t.meta.subtitle=v;return t;})} placeholder="Add a subtitle"/></div>
+        </div></div></div>
+      </div>
+
+      <div className="wrap">
+        <StatRow trip={trip} update={update}/>
+        <div className="tabsbar"><div className="tabs">
+          {TABS.map(t=><div key={t.k} className={"tab "+(tab===t.k?"active":"")} onClick={()=>setTab(t.k)}><span>{t.icon}</span>{t.label}</div>)}
+        </div></div>
+        <div style={{paddingBottom:80}} key={tab} className="rise">
+          {tab==="itinerary" && <Itinerary trip={trip} update={update}/>}
+          {tab==="flights" && <Flights trip={trip} update={update}/>}
+          {tab==="packing" && <Packing trip={trip} update={update}/>}
+          {tab==="quests" && <Quests trip={trip} update={update}/>}
+          {tab==="info" && <Info trip={trip} update={update}/>}
+        </div>
+      </div>
+    </div>
+  );
+}
+function SettingsMenu({trip,country,update,onDelete,close}){
+  useEffect(()=>{ const h=(e)=>{ if(!e.target.closest(".pop")&&!e.target.closest(".btn")) close(); };
+    setTimeout(()=>document.addEventListener("click",h),0); return()=>document.removeEventListener("click",h); },[close]);
+  return (
+    <div className="pop">
+      <div className="field" style={{marginBottom:11}}><label>Hero image URL</label>
+        <input defaultValue={trip.heroImage||""} placeholder={heroFor(trip,country)?"(using a default)":"https://..."} onBlur={e=>update(t=>{t.heroImage=e.target.value.trim();return t;})}/></div>
+      <div className="field" style={{marginBottom:11}}><label>Country</label>
+        <input defaultValue={trip.country||country||""} placeholder="Country" onBlur={e=>update(t=>{t.country=e.target.value.trim();return t;})}/></div>
+      <button className="btn ghost sm" style={{width:"100%",marginBottom:8}} onClick={()=>update(t=>{t.archived=!t.archived;return t;})}>{trip.archived?"Unarchive trip":"Archive trip"}</button>
+      <button className="btn ghost danger sm" style={{width:"100%"}} onClick={()=>{ if(confirm(`Delete "${trip.meta?.tripName||trip.slug}"? This cannot be undone.`)) onDelete(); }}>Delete trip</button>
+    </div>
+  );
+}
+function StatRow({trip,update}){
+  const stats=trip.meta?.stats||[]; if(stats.length===0) return null;
+  return <div className="statrow">{stats.map((s,i)=><div className="s" key={i}>
+    <b><Editable value={s.n} onChange={v=>update(t=>{t.meta.stats[i].n=v;return t;})}/></b>
+    <span><Editable value={s.l} onChange={v=>update(t=>{t.meta.stats[i].l=v;return t;})}/></span></div>)}</div>;
+}
+
+/* ============ ITINERARY ============ */
+function Itinerary({trip,update}){
+  const days=trip.days||[];
+  const addDay=()=>update(t=>{ (t.days=t.days||[]).push({id:uid("d"),date:"",day:`Day ${t.days.length+1}`,title:"New day",location:"",type:"explore",emoji:"📍",details:[],tips:"",accommodation:null,suggestions:[]}); return t; });
+  return (
+    <div>
+      <Weather trip={trip}/>
+      {days.length>1 && <div className="rail">{days.map((d,i)=>{ const wd=weekdayShort(d.date);
+        return <div className="rpill" key={d.id||i} onClick={()=>{const el=document.getElementById("day-"+(d.id||i)); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});}}>
+          <div className="rw">{wd.w||("D"+(i+1))}</div><div className="rn">{wd.n||(i+1)}</div><div className="re">{d.emoji||"📍"}</div></div>; })}</div>}
+      <div className="section-title"><h2>Itinerary</h2><button className="btn sm" onClick={addDay}>+ Add day</button></div>
+      {days.length===0 && <div className="card muted center">No days yet. Add your first day.</div>}
+      {days.map((d,i)=><DayCard key={d.id||i} day={d} idx={i} update={update}/>)}
+    </div>
+  );
+}
+function DayCard({day,idx,update}){
+  const [open,setOpen]=useState(true);
+  const patch=(fn)=>update(t=>{ fn(t.days[idx]); return t; });
+  const cycleType=()=>patch(d=>{ d.type=TYPE_ORDER[(TYPE_ORDER.indexOf(d.type)+1)%TYPE_ORDER.length]; });
+  const del=()=>{ if(confirm("Delete this day?")) update(t=>{t.days.splice(idx,1);return t;}); };
+  const type=TC[day.type]?day.type:"explore";
+  return (
+    <div className={"card day "+type} id={"day-"+(day.id||idx)}>
+      <div className="day-head">
+        <div className="day-emoji" title="Change emoji" onClick={()=>{const e=prompt("Emoji:",day.emoji||"📍");if(e!==null)patch(d=>d.emoji=e);}}>{day.emoji||"📍"}</div>
+        <div className="day-meta">
+          <div className="day-daylabel"><Editable value={day.day} onChange={v=>patch(d=>d.day=v)} placeholder="Day 1"/>{" · "}<Editable value={day.date} onChange={v=>patch(d=>d.date=v)} placeholder="Mon, Jan 1"/></div>
+          <div className="day-title"><Editable value={day.title} onChange={v=>patch(d=>d.title=v)} placeholder="Title"/></div>
+          <div className="day-loc">📍 <Editable value={day.location} onChange={v=>patch(d=>d.location=v)} placeholder="Location"/></div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
+          <span className={"type-pill "+type} onClick={cycleType} title="Change type">{TC[type].label}</span>
+          <div style={{display:"flex",gap:2}}><button className="icon-btn" onClick={()=>setOpen(o=>!o)}>{open?"▾":"▸"}</button><button className="icon-btn" onClick={del}>🗑</button></div>
+        </div>
+      </div>
+      {open && <div style={{marginTop:14}}>
+        {(day.details||[]).map((dt,j)=>(
+          <div className="detail-row" key={j}>
+            <div className="detail-time"><Editable value={dt.time} onChange={v=>patch(d=>d.details[j].time=v)} placeholder="Time"/></div>
+            <div className="detail-body">
+              <div className="detail-text"><Editable value={dt.text} onChange={v=>patch(d=>d.details[j].text=v)} placeholder="What's happening"/></div>
+              <div className="detail-sub"><Editable value={dt.sub} onChange={v=>patch(d=>d.details[j].sub=v)} placeholder="Notes" multiline/></div>
+            </div>
+            <button className="icon-btn" onClick={()=>patch(d=>d.details.splice(j,1))}>✕</button>
+          </div>
+        ))}
+        <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.details=d.details||[]).push({time:"",text:"",sub:""}))}>+ Add item</button>
+        {day.tips!==undefined && <div className="tips"><b>💡 Tip: </b><Editable value={day.tips} onChange={v=>patch(d=>d.tips=v)} placeholder="Add a tip" multiline/></div>}
+        <div className="accom"><span style={{fontSize:18}}>🛏</span><div style={{flex:1}}><div className="al">Accommodation</div>
+          <Editable value={day.accommodation||""} onChange={v=>patch(d=>d.accommodation=v||null)} placeholder="Hotel, riad, Airbnb…"/></div></div>
+        {(day.suggestions&&day.suggestions.length>0) && <div className="suggs">{day.suggestions.map((s,k)=>(
+          <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/><span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1))}>✕</span></span>))}</div>}
+        <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.suggestions=d.suggestions||[]).push("New idea"))}>+ Add suggestion</button>
+      </div>}
+    </div>
+  );
+}
+
+/* ============ WEATHER ============ */
+function Weather({trip}){
+  const [data,setData]=useState(null); const [err,setErr]=useState(false);
+  const cities=useMemo(()=>Object.entries(trip.cityCoords||{}).slice(0,10),[trip.cityCoords]);
+  useEffect(()=>{ if(cities.length===0){setData([]);return;} let alive=true;
+    Promise.all(cities.map(([name,c])=>fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto`).then(r=>r.json()).then(j=>({name,d:j.daily})).catch(()=>({name,d:null}))))
+      .then(res=>{ if(alive) setData(res); }).catch(()=>{ if(alive) setErr(true); });
+    return()=>{alive=false;}; },[cities]);
+  if(cities.length===0) return null;
+  return (
+    <div className="card">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><h3 style={{fontSize:19}}>Weather right now</h3><span className="chip">Open-Meteo · live</span></div>
+      {!data ? <div className="muted small">Loading weather…</div> : err ? <div className="muted small">Weather unavailable.</div> :
+        <div className="wgrid">{data.map(({name,d})=>{ if(!d) return <div className="wcard" key={name}><div className="wl">{name}</div><div className="wr">-</div></div>;
+          const [ic,lab]=wmo(d.weather_code?.[0]); return <div className="wcard" key={name}><div className="wc">{ic}</div><div className="wt">{Math.round(d.temperature_2m_max?.[0])}°</div><div className="wl">{name}</div><div className="wr">{Math.round(d.temperature_2m_min?.[0])}° · {lab}</div></div>; })}</div>}
+    </div>
+  );
+}
+
+/* ============ FLIGHTS ============ */
+const FL_LABELS={date:"Date",airline:"Airline",flights:"Flights",flight:"Flight",depart:"Depart",arrive:"Arrive",duration:"Duration",stop:"Stop",cost:"Cost",fare:"Fare",confirmation:"Confirmation"};
+const FL_ORDER=["date","airline","flights","flight","depart","arrive","duration","stop","fare","cost","confirmation"];
+function Flights({trip,update}){
+  const flights=trip.flights||[];
+  const patch=(i,fn)=>update(t=>{fn(t.flights[i]);return t;});
+  const add=()=>update(t=>{(t.flights=t.flights||[]).push({id:uid("f"),route:"YYZ → ",date:"",airline:"",flight:"",depart:"",arrive:"",duration:"",stop:"",cost:"",confirmation:""});return t;});
+  const flnotes=trip.flnotes;
+  return (
+    <div>
+      <div className="section-title"><h2>Flights</h2><button className="btn sm" onClick={add}>+ Add flight</button></div>
+      {flights.map((f,i)=>{ const keys=FL_ORDER.filter(k=>k in f); const extra=Object.keys(f).filter(k=>k!=="id"&&k!=="route"&&!FL_ORDER.includes(k));
+        const shown=keys.concat(extra); return (
+        <div className="card flight" key={f.id||i}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+            <div className="route"><Editable value={f.route} onChange={v=>patch(i,x=>x.route=v)} placeholder="YYZ → CMN → RAK"/></div>
+            <button className="icon-btn" onClick={()=>update(t=>{t.flights.splice(i,1);return t;})}>🗑</button>
+          </div>
+          <div className="fgrid">{shown.map(k=><div key={k}><div className="fl">{FL_LABELS[k]||k}</div><div className="fv"><Editable value={String(f[k]??"")} onChange={v=>patch(i,x=>x[k]=v)} placeholder="-"/></div></div>)}</div>
+        </div>); })}
+      {flights.length===0 && <div className="card muted center">No flights yet.</div>}
+      {(flnotes!==undefined&&flnotes!==null) && <div className="card tight">
+        <div className="fl" style={{fontSize:11,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",marginBottom:8,fontWeight:600}}>Notes</div>
+        {typeof flnotes==="object" ? Object.entries(flnotes).map(([k,v])=>(
+          <div key={k} style={{marginBottom:12}}><div style={{fontSize:10.5,textTransform:"uppercase",letterSpacing:".6px",color:"var(--muted)",fontWeight:600,marginBottom:3}}>{k}</div>
+            <div className="info-content"><Editable value={String(v??"")} onChange={val=>update(t=>{t.flnotes[k]=val;return t;})} multiline/></div></div>))
+          : <div className="info-content"><Editable value={flnotes} onChange={v=>update(t=>{t.flnotes=v;return t;})} placeholder="Baggage, booking refs, rules…" multiline/></div>}
+      </div>}
+    </div>
+  );
+}
+
+/* ============ PACKING ============ */
+function Packing({trip,update}){
+  const packing=trip.packing||{}; const checked=trip.checked||{};
+  const cats=Object.keys(packing);
+  const all=Object.values(packing).flat(); const done=all.filter(x=>checked[x]).length;
+  const toggle=(item)=>update(t=>{t.checked=t.checked||{};t.checked[item]=!t.checked[item];return t;});
+  const addItem=(cat,val)=>update(t=>{t.packing=t.packing||{};(t.packing[cat]=t.packing[cat]||[]).push(val);return t;});
+  const delItem=(cat,idx)=>update(t=>{const v=t.packing[cat][idx];t.packing[cat].splice(idx,1);if(t.checked)delete t.checked[v];return t;});
+  const editItem=(cat,idx,val)=>update(t=>{const old=t.packing[cat][idx];t.packing[cat][idx]=val;if(t.checked&&t.checked[old]!==undefined){t.checked[val]=t.checked[old];delete t.checked[old];}return t;});
+  const addCat=()=>{const n=prompt("New category name:");if(n&&n.trim())update(t=>{t.packing=t.packing||{};if(!t.packing[n.trim()])t.packing[n.trim()]=[];return t;});};
+  return (
+    <div>
+      <div className="section-title"><h2>Packing</h2><span className="chip">{done}/{all.length} packed</span></div>
+      {all.length>0 && <div className="prog"><i style={{width:(all.length?done/all.length*100:0)+"%"}}/></div>}
+      {cats.map(cat=>(
+        <div className="card" key={cat}>
+          <h3 style={{fontSize:18,marginBottom:8}}>{packIcon(cat)} {cat}</h3>
+          {(packing[cat]||[]).map((item,idx)=>(
+            <div className={"checkline "+(checked[item]?"done":"")} key={idx}>
+              <div className={"checkbox "+(checked[item]?"on":"")} onClick={()=>toggle(item)}>{checked[item]?"✓":""}</div>
+              <span className="ct"><Editable value={item} onChange={v=>editItem(cat,idx,v)}/></span>
+              <button className="icon-btn" onClick={()=>delItem(cat,idx)}>✕</button>
+            </div>
+          ))}
+          <AddLine placeholder={`Add to ${cat}`} onAdd={v=>addItem(cat,v)}/>
+        </div>
+      ))}
+      {cats.length===0 && <div className="card muted center">No packing categories yet.</div>}
+      <button className="btn ghost sm" onClick={addCat}>+ Add category</button>
+    </div>
+  );
+}
+function AddLine({placeholder,onAdd}){
+  const [v,setV]=useState(""); const submit=()=>{ if(v.trim()){onAdd(v.trim());setV("");} };
+  return <div className="addline"><input value={v} onChange={e=>setV(e.target.value)} placeholder={placeholder} onKeyDown={e=>e.key==="Enter"&&submit()}/><button className="btn sm" onClick={submit}>Add</button></div>;
+}
+
+/* ============ QUESTS ============ */
+function Quests({trip,update}){
+  const quests=trip.quests||[];
+  const getText=(q)=>q.text||q.name||""; const getCat=(q)=>q.category||q.cat||"activity";
+  const done=quests.filter(q=>q.done).length;
+  const toggle=(i)=>update(t=>{t.quests[i].done=!t.quests[i].done;return t;});
+  const add=(text)=>update(t=>{(t.quests=t.quests||[]).push({id:uid("q"),text,category:"activity",done:false,city:"any"});return t;});
+  const del=(i)=>update(t=>{t.quests.splice(i,1);return t;});
+  const cycleCat=(i)=>update(t=>{const q=t.quests[i];const key=q.category!==undefined?"category":(q.cat!==undefined?"cat":"category");const v=q[key]||"activity";q[key]=CAT_ORDER[(CAT_ORDER.indexOf(v)+1)%CAT_ORDER.length];return t;});
+  const editText=(i,v)=>update(t=>{const q=t.quests[i];const key=q.text!==undefined?"text":(q.name!==undefined?"name":"text");q[key]=v;return t;});
+  const byCity={}; quests.forEach((q,i)=>{ const c=(q.city||"any"); (byCity[c]=byCity[c]||[]).push({q,i}); });
+  return (
+    <div>
+      <div className="section-title"><h2>Quest Log</h2><span className="chip">⚔️ {done}/{quests.length} complete</span></div>
+      {quests.length>0 && <div className="prog"><i style={{width:(quests.length?done/quests.length*100:0)+"%"}}/></div>}
+      {Object.entries(byCity).map(([city,items])=>(
+        <div className="card" key={city}>
+          <h3 style={{fontSize:17,marginBottom:6,textTransform:"capitalize"}}>{city==="any"?"Anywhere":city}</h3>
+          {items.map(({q,i})=>{ const cat=getCat(q); const meta=CATS[cat]||{c:"var(--muted2)",label:cat};
+            return (
+            <div className={"quest "+(q.done?"done":"")} key={q.id||i}>
+              <div className={"checkbox "+(q.done?"on":"")} onClick={()=>toggle(i)}>{q.done?"✓":""}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div className="qt"><Editable value={getText(q)} onChange={v=>editText(i,v)}/></div>
+                {q.notes && <div className="qsub">{q.notes}</div>}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span className="qbadge" style={{background:meta.c,cursor:"pointer"}} onClick={()=>cycleCat(i)} title="Change category">{meta.label}</span>
+                <button className="icon-btn" onClick={()=>del(i)}>✕</button>
+              </div>
+            </div>); })}
+        </div>
+      ))}
+      <div className="card"><AddLine placeholder="Add a quest…" onAdd={add}/></div>
+    </div>
+  );
+}
+
+/* ============ INFO ============ */
+function Info({trip,update}){
+  const info=trip.info;
+  const hotelDistances=useMemo(()=>{ const hc=trip.hotelCoords||{},cc=trip.cityCoords||{};
+    return Object.entries(hc).map(([city,h])=>({city,name:h.name,km:cc[city]?haversine(h,cc[city]):null})).filter(x=>x.name); },[trip.hotelCoords,trip.cityCoords]);
+  const isArr=Array.isArray(info);
+  const hasStruct=info&&!isArr&&typeof info==="object"&&Object.keys(info).length>0;
+  const addSection=()=>update(t=>{ if(!Array.isArray(t.info)) t.info=[]; t.info.push({title:"New section",content:""}); return t; });
+  return (
+    <div>
+      <div className="section-title"><h2>Info & Tips</h2>{(isArr||!hasStruct)&&<button className="btn sm" onClick={addSection}>+ Add section</button>}</div>
+
+      {hotelDistances.length>0 && <div className="card info-block"><h3>🏨 Where you're staying</h3>
+        <ul className="info-list">{hotelDistances.map(h=><li key={h.city}><b>{h.name}</b> <span className="muted" style={{textTransform:"capitalize"}}>({h.city})</span>{h.km!=null && <span className="muted"> · ~{h.km} km from center</span>}</li>)}</ul></div>}
+
+      {isArr && info.map((sec,i)=>(
+        <div className="card info-block" key={i}>
+          <div style={{display:"flex",justifyContent:"space-between",gap:10}}>
+            <h3><Editable value={sec.title} onChange={v=>update(t=>{t.info[i].title=v;return t;})} placeholder="Section title"/></h3>
+            <button className="icon-btn" onClick={()=>update(t=>{t.info.splice(i,1);return t;})}>🗑</button>
+          </div>
+          <div className="info-content"><Editable value={sec.content} onChange={v=>update(t=>{t.info[i].content=v;return t;})} placeholder="Details…" multiline/></div>
+        </div>
+      ))}
+
+      {hasStruct && <StructInfo info={info}/>}
+
+      {trip.bookings && trip.bookings.length>0 && <div className="card info-block"><h3>📋 Bookings tracker</h3>
+        {trip.bookings.map((b,i)=>(<div className="checkline" key={b.id||i}>
+          <div className={"checkbox "+(b.status==="booked"?"on":"")} onClick={()=>update(t=>{t.bookings[i].status=t.bookings[i].status==="booked"?"not_booked":"booked";return t;})}>{b.status==="booked"?"✓":""}</div>
+          <span className="ct"><b>{b.vendor}</b> <span className="muted small">· {b.cost}</span>{b.notes && <div className="muted small">{b.notes}</div>}</span></div>))}</div>}
+
+      {trip.budget_estimate?.per_person_cad && <div className="card info-block"><h3>🧮 Budget (per person)</h3>
+        <ul className="info-list">{Object.entries(trip.budget_estimate.per_person_cad).filter(([k])=>!k.startsWith("total")).map(([k,v])=><li key={k} style={{textTransform:"capitalize"}}>{k.replace(/_/g," ")}: ${v}</li>)}</ul>
+        <div style={{marginTop:10,fontWeight:700,fontSize:16}}>Total: ${trip.budget_estimate.per_person_cad.total_low}-${trip.budget_estimate.per_person_cad.total_high} CAD</div></div>}
+
+      {!isArr && !hasStruct && hotelDistances.length===0 && !trip.bookings && !trip.budget_estimate && <div className="card muted center">No info yet. Add a section.</div>}
+    </div>
+  );
+}
+function StructInfo({info}){
+  const blocks=[];
+  if(info.currency) blocks.push(<div className="card info-block" key="cur"><h3>💱 Currency</h3><div className="muted small">{info.currency.name} · {info.currency.rate}</div>{info.currency.notes&&<p className="info-content" style={{marginTop:6}}>{info.currency.notes}</p>}</div>);
+  if(info.language) blocks.push(<div className="card info-block" key="lang"><h3>🗣 Language</h3><div className="muted small">{info.language.primary}{info.language.tourist_areas?` · ${info.language.tourist_areas}`:""}</div>{info.language.useful_phrases&&<ul className="info-list" style={{marginTop:6}}>{info.language.useful_phrases.map((p,i)=><li key={i}>{p}</li>)}</ul>}</div>);
+  if(info.food_price_ceilings) blocks.push(<div className="card info-block" key="fpc"><h3>🍽 Food price ceilings</h3><ul className="info-list">{Object.entries(info.food_price_ceilings).map(([k,v])=><li key={k} style={{textTransform:"capitalize"}}>{k.replace(/_/g," ")}: <span className="price-tag">{v}</span></li>)}</ul></div>);
+  if(info.tipping) blocks.push(<div className="card info-block" key="tip"><h3>💵 Tipping</h3><ul className="info-list">{Object.entries(info.tipping).map(([k,v])=><li key={k} style={{textTransform:"capitalize"}}>{k.replace(/_/g," ")}: {v}</li>)}</ul></div>);
+  if(info.scams_to_expect) blocks.push(<div className="card info-block" key="scam"><h3>⚠️ Scams to expect</h3><ul className="info-list">{info.scams_to_expect.map((s,i)=><li key={i}>{s}</li>)}</ul></div>);
+  if(info.drinking) blocks.push(<div className="card info-block" key="drink"><h3>🍷 Drinking</h3><p className="info-content">{info.drinking}</p></div>);
+  if(info.sim_card) blocks.push(<div className="card info-block" key="sim"><h3>📱 SIM card</h3><p className="info-content">{info.sim_card}</p></div>);
+  if(info.weather_expectations) blocks.push(<div className="card info-block" key="we"><h3>🌡 Weather expectations</h3><ul className="info-list">{Object.entries(info.weather_expectations).map(([k,v])=><li key={k} style={{textTransform:"capitalize"}}>{k.replace(/_/g," ")}: {v}</li>)}</ul></div>);
+  if(info.moga_festival) blocks.push(<div className="card info-block" key="moga"><h3>🎶 Festival</h3><p className="info-content">{info.moga_festival}</p></div>);
+  if(info.seans_notes) blocks.push(<div className="card info-block" key="sean"><h3>📓 Local friend's notes{info.seans_notes.source?` (${info.seans_notes.source})`:""}</h3>
+    {info.seans_notes.key_rules&&<><div className="muted small">Key rules</div><ul className="info-list">{info.seans_notes.key_rules.map((r,i)=><li key={i}>{r}</li>)}</ul></>}
+    {info.seans_notes.specific_spots&&<><div className="muted small" style={{marginTop:8}}>Specific spots</div><ul className="info-list">{info.seans_notes.specific_spots.map((r,i)=><li key={i}>{r}</li>)}</ul></>}</div>);
+  return <>{blocks}</>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

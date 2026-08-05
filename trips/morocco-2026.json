@@ -1,0 +1,443 @@
+{
+  "slug": "morocco-2026",
+  "country": "Morocco",
+  "archived": false,
+  "heroImage": "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=1600&q=80",
+  "meta": {
+    "tripName": "Morocco",
+    "subtitle": "Toronto → Marrakech → Sahara → Essaouira → Home",
+    "startDate": "2026-09-20",
+    "endDate": "2026-09-30",
+    "stats": [
+      {"n": "11", "l": "days"},
+      {"n": "3", "l": "cities"},
+      {"n": "1", "l": "desert night"},
+      {"n": "2", "l": "flights"}
+    ]
+  },
+  "days": [
+    {
+      "id": "d1",
+      "date": "Sun, Sep 20",
+      "day": "Day 1",
+      "title": "Toronto → Casablanca",
+      "location": "Travel Day",
+      "type": "travel",
+      "emoji": "✈️",
+      "details": [
+        {"time": "8:00 PM", "text": "Arrive YYZ Terminal 3", "sub": "Grab duty-free: 1 L of alcohol each, cheaper than buying in Morocco"},
+        {"time": "10:25 PM", "text": "Depart Toronto YYZ → Casablanca", "sub": "Royal Air Maroc · 1 stop in CMN · overnight flight"}
+      ],
+      "tips": "Sleep on the plane. Have your riad's address written down for customs. Passport must be valid through at least March 2027.",
+      "accommodation": null,
+      "suggestions": []
+    },
+    {
+      "id": "d2",
+      "date": "Mon, Sep 21",
+      "day": "Day 2",
+      "title": "Land Marrakech",
+      "location": "Marrakech, Morocco",
+      "type": "travel",
+      "emoji": "🛬",
+      "details": [
+        {"time": "1:05 PM", "text": "Arrive Marrakech Menara (RAK)", "sub": "Grab an Inwi SIM at the airport (~$15 CAD). Avoid Orange."},
+        {"time": "~2:00 PM", "text": "Riad airport pickup", "sub": "Confirm with Riad De Vinci ahead of time"},
+        {"time": "~2:30 PM", "text": "Check in at Riad De Vinci", "sub": "3-night stay, medina location"},
+        {"time": "PM", "text": "Easy medina walk", "sub": "Wander, get oriented, don't push it"},
+        {"time": "Evening", "text": "Rooftop dinner at riad", "sub": "Early night, adjust to timezone"}
+      ],
+      "tips": "Insist on taxi meter (compteur) if using one. Google Maps works, ignore anyone offering directions.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Mint tea on rooftop", "Short Jemaa el-Fnaa peek at night"]
+    },
+    {
+      "id": "d3",
+      "date": "Tue, Sep 22",
+      "day": "Day 3",
+      "title": "Marrakech - Medina & Hammam",
+      "location": "Marrakech, Morocco",
+      "type": "explore",
+      "emoji": "🕌",
+      "details": [
+        {"time": "Morning", "text": "Bahia Palace & Saadian Tombs", "sub": "Beat the heat, arrive by 9 AM"},
+        {"time": "Midday", "text": "Souk crawl", "sub": "Souk Semmarine (textiles), Souk Cherratine (leather). Bargain, use walk-away trick"},
+        {"time": "PM", "text": "Hammam ritual", "sub": "Les Bains de Marrakech or Hammam de la Rose. Book through riad."},
+        {"time": "Sunset", "text": "Jemaa el-Fnaa from a rooftop", "sub": "Café des Épices or Terrasse des Épices for the view"},
+        {"time": "Evening", "text": "Dinner at Nomad", "sub": "Modern Moroccan, rooftop, book ahead"}
+      ],
+      "tips": "Tagine max 60 MAD, couscous max 60 MAD, anything more is a scam (per Sean's rule).",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Nomad dinner", "Café Clock lunch", "Le Salama for drinks"]
+    },
+    {
+      "id": "d4",
+      "date": "Wed, Sep 23",
+      "day": "Day 4",
+      "title": "Marrakech - Gardens & Nightlife",
+      "location": "Marrakech, Morocco",
+      "type": "explore",
+      "emoji": "🌿",
+      "details": [
+        {"time": "Morning", "text": "Jardin Majorelle", "sub": "Cobalt blue, palms, iconic. Book tickets online ahead."},
+        {"time": "Midday", "text": "Le Jardin lunch", "sub": "Courtyard garden restaurant in the medina"},
+        {"time": "PM", "text": "Mellah + rest at riad", "sub": "Explore the old Jewish quarter, then chill before dinner"},
+        {"time": "Evening", "text": "Dar Essalam dinner", "sub": "Sean's pick: oldest restaurant in Marrakech, live Moroccan music. BOOK AHEAD."},
+        {"time": "Night", "text": "Hivernage cocktails", "sub": "Kabana or +61 for post-dinner drinks"}
+      ],
+      "tips": "Sahara tour departs early tomorrow morning. Pack a small overnight bag, leave main suitcase at riad.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Kabana rooftop", "+61 natural wine", "Le Salama"]
+    },
+    {
+      "id": "d5",
+      "date": "Thu, Sep 24",
+      "day": "Day 5",
+      "title": "Sahara Day 1 - Atlas & Aït Ben Haddou",
+      "location": "Marrakech → Kelaat M'Gouna",
+      "type": "trek",
+      "emoji": "🏔️",
+      "details": [
+        {"time": "~7:00 AM", "text": "Sahara tour pickup at Riad De Vinci", "sub": "3-day tour, operator TBD (DM @toparadise.Morocco or book via GetYourGuide)"},
+        {"time": "AM", "text": "Cross High Atlas via Tizi n'Tichka Pass", "sub": "Berber villages, mountain views, photo stops"},
+        {"time": "Midday", "text": "Aït Ben Haddou (UNESCO)", "sub": "Ancient mud-brick kasbah. Game of Thrones + Gladiator filming location."},
+        {"time": "PM", "text": "Ouarzazate stop", "sub": "\"Hollywood of Africa\", quick cinema studio view"},
+        {"time": "PM", "text": "Road of 1001 Kasbahs", "sub": "Scenic drive to Kelaat M'Gouna"},
+        {"time": "Evening", "text": "Dinner + overnight at Hotel Kelaat M'Gouna", "sub": "Traditional Moroccan dinner included with tour"}
+      ],
+      "tips": "Bring layers. Small bag only. Cash for lunches (not included). Charge everything, limited power at desert camp tomorrow.",
+      "accommodation": "Hotel Kalaat M'Gouna (via Sahara tour)",
+      "suggestions": []
+    },
+    {
+      "id": "d6",
+      "date": "Fri, Sep 25",
+      "day": "Day 6",
+      "title": "Sahara Day 2 - Erg Chebbi Dunes",
+      "location": "Kelaat M'Gouna → Merzouga",
+      "type": "trek",
+      "emoji": "🐪",
+      "details": [
+        {"time": "AM", "text": "Todra Gorges walk", "sub": "Drive to Tinghir, walk through the oasis and gorges"},
+        {"time": "Midday", "text": "Lunch in Tinghir", "sub": "Local restaurant, buy own"},
+        {"time": "PM", "text": "Drive to Merzouga / Erg Chebbi", "sub": "Arrive in time for sunset activities"},
+        {"time": "Sunset", "text": "Camel trek + sandboarding", "sub": "Golden-hour ride into the dunes. Bring sunglasses and a scarf."},
+        {"time": "Evening", "text": "Luxury desert camp dinner + Berber drumming", "sub": "Dinner under the stars, live music by campfire. This is the moment."},
+        {"time": "Night", "text": "Sleep in luxury tent", "sub": "Confirm private bathroom in tent when booking"}
+      ],
+      "tips": "No alcohol at most desert camps. Cold at night (15-18C), warm layer essential.",
+      "accommodation": "Luxury Desert Camp (Erg Chebbi, Merzouga)",
+      "suggestions": ["Stargazing after dinner", "Sunrise dune climb"]
+    },
+    {
+      "id": "d7",
+      "date": "Sat, Sep 26",
+      "day": "Day 7",
+      "title": "Sahara Day 3 - Sunrise & Return",
+      "location": "Merzouga → Marrakech",
+      "type": "trek",
+      "emoji": "🌅",
+      "details": [
+        {"time": "~6:00 AM", "text": "Sunrise camel ride", "sub": "Climb a dune, watch the Sahara wake up"},
+        {"time": "~8:00 AM", "text": "Breakfast at camp", "sub": "Then depart for the return drive"},
+        {"time": "All day", "text": "Long drive back to Marrakech", "sub": "~10 hours with lunch stop. Brutal but expected."},
+        {"time": "~8:00 PM", "text": "Drop-off at Riad De Vinci", "sub": "Same riad, 1-night stay to recover"},
+        {"time": "Evening", "text": "Easy dinner near riad", "sub": "Do not attempt nightlife. Sleep."}
+      ],
+      "tips": "You will be exhausted. Order dinner delivery to the riad if needed. Big day tomorrow but nothing scheduled early.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": []
+    },
+    {
+      "id": "d8",
+      "date": "Sun, Sep 27",
+      "day": "Day 8",
+      "title": "Marrakech → Essaouira",
+      "location": "Marrakech → Essaouira",
+      "type": "travel",
+      "emoji": "🌊",
+      "details": [
+        {"time": "Morning", "text": "Slow morning at riad", "sub": "Rooftop breakfast, recovery"},
+        {"time": "~10:00 AM", "text": "Private driver pickup for Essaouira", "sub": "Book through riad, ~$100 CAD split with Prathab"},
+        {"time": "Midday", "text": "Argan oil cooperative stop", "sub": "Local women pressing argan by hand, real oil at fair prices"},
+        {"time": "En route", "text": "Goats-in-trees photo stop (optional)", "sub": "Touristy but iconic, ~5 min"},
+        {"time": "~1:30 PM", "text": "Arrive Essaouira, check in", "sub": "Riad TBD, book Booking.com asap (MOGA OFF pressure)"},
+        {"time": "PM", "text": "Port seafood lunch", "sub": "Pick your fish off the boats, they grill it. ~$15 CAD total."},
+        {"time": "Sunset", "text": "Walk the Skala ramparts", "sub": "Game of Thrones fans will recognize this. Cocktails at Taros after."},
+        {"time": "Evening", "text": "Dinner + live Gnawa music", "sub": "Taros rooftop, or La Table by Madada"}
+      ],
+      "tips": "MOGA Festival kicks off Sep 30 in Essaouira. Pre-parties (MOGA OFF) run in the medina Sep 27-29. Free house/techno + Gnaoua. Check mogafestival.com.",
+      "accommodation": "Essaouira Riad (TBD)",
+      "suggestions": ["Coast Cafe Essaouira (Sean's pick)", "Taros rooftop", "La Table by Madada"]
+    },
+    {
+      "id": "d9",
+      "date": "Mon, Sep 28",
+      "day": "Day 9",
+      "title": "Essaouira - Beach & Medina",
+      "location": "Essaouira, Morocco",
+      "type": "explore",
+      "emoji": "🏖️",
+      "details": [
+        {"time": "Morning", "text": "Slow cafe breakfast", "sub": "The whole city is walkable in an hour. No rush."},
+        {"time": "Midday", "text": "Beach walk + ocean time", "sub": "Camels on the beach if you want"},
+        {"time": "PM", "text": "Medina wandering + shopping", "sub": "Argan cosmetics, silver jewelry, art. Way less hustle than Marrakech."},
+        {"time": "Late PM", "text": "Sunset drinks on the ramparts", "sub": "Wine bars welcome, drinking is easier here than Marrakech"},
+        {"time": "Evening", "text": "Coast Cafe dinner", "sub": "Sean's specific pick. Book ahead."}
+      ],
+      "tips": "MOGA OFF parties in the medina tonight, wander and stumble into them. Free.",
+      "accommodation": "Essaouira Riad (TBD)",
+      "suggestions": ["Surf lesson (weather dependent)", "Skala fortress at golden hour", "Live Gnawa music"]
+    },
+    {
+      "id": "d10",
+      "date": "Tue, Sep 29",
+      "day": "Day 10",
+      "title": "Back to Marrakech - Final Night",
+      "location": "Essaouira → Marrakech",
+      "type": "explore",
+      "emoji": "🌆",
+      "details": [
+        {"time": "AM", "text": "Slow Essaouira morning", "sub": "Last coffee, last beach walk"},
+        {"time": "~12:00 PM", "text": "Supratours bus to Marrakech", "sub": "~150 MAD ($20 CAD) pp, book at markoub.ma"},
+        {"time": "~3:00 PM", "text": "Arrive Marrakech, check into Riad De Vinci", "sub": "1-night final stay, same riad"},
+        {"time": "PM", "text": "Final souk run + hammam #2", "sub": "Last chance for gifts and pampering"},
+        {"time": "Evening", "text": "Splurge dinner", "sub": "Le Jardin, La Mamounia, or wherever you fell in love with"},
+        {"time": "Night", "text": "Hivernage nightlife or riad rooftop", "sub": "Last night, make it good"}
+      ],
+      "tips": "Pack tonight. Exchange leftover MAD (can't take more than 1000 out). Confirm airport transfer for tomorrow.",
+      "accommodation": "Riad De Vinci (Marrakech)",
+      "suggestions": ["Rooftop nightcap at riad", "One last mint tea"]
+    },
+    {
+      "id": "d11",
+      "date": "Wed, Sep 30",
+      "day": "Day 11",
+      "title": "Marrakech → Toronto",
+      "location": "Travel Day",
+      "type": "travel",
+      "emoji": "🏠",
+      "details": [
+        {"time": "Morning", "text": "Slow breakfast, pack out", "sub": "Airport transfer via riad, ~$25 CAD"},
+        {"time": "~11:30 AM", "text": "Depart for RAK airport", "sub": "Arrive 2 hours early for international"},
+        {"time": "1:45 PM", "text": "Flight RAK → Casablanca", "sub": "Royal Air Maroc, stop in CMN"},
+        {"time": "~5:00 PM", "text": "Depart CMN → Toronto", "sub": "RAM direct-ish leg"},
+        {"time": "8:10 PM", "text": "Arrive YYZ", "sub": "Welcome home 🇨🇦"}
+      ],
+      "tips": "Non-refundable flight. Get to CMN well ahead. Exchange remaining MAD before leaving the airport.",
+      "accommodation": null,
+      "suggestions": []
+    }
+  ],
+  "flights": [
+    {
+      "id": "f1",
+      "date": "Sun, Sep 20",
+      "airline": "Royal Air Maroc",
+      "route": "YYZ → CMN → RAK",
+      "flight": "AT 211 + AT 411",
+      "depart": "10:25 PM YYZ",
+      "arrive": "1:05 PM RAK (Sep 21)",
+      "duration": "9h 40m",
+      "stop": "1h 10m in CMN",
+      "cost": "$1,136.25 CAD (roundtrip, incl. baggage)",
+      "confirmation": "TBD after booking"
+    },
+    {
+      "id": "f2",
+      "date": "Wed, Sep 30",
+      "airline": "Royal Air Maroc",
+      "route": "RAK → CMN → YYZ",
+      "flight": "AT 410 + AT 210",
+      "depart": "1:45 PM RAK",
+      "arrive": "8:10 PM YYZ",
+      "duration": "11h 25m",
+      "stop": "2h 0m in CMN",
+      "cost": "included in roundtrip",
+      "confirmation": "TBD after booking"
+    }
+  ],
+  "flnotes": "RAM only flies YYZ↔CMN direct on Wed/Fri/Sun. Baggage included (23kg each way). Non-refundable, date changes have a fee. Buy travel insurance.",
+  "packing": {
+    "clothing": [
+      "5x t-shirts (light, breathable)",
+      "2x button-up or nicer shirt (rooftop dinners)",
+      "1x lightweight sweater or hoodie (desert night)",
+      "1x rain shell (unlikely rain but small)",
+      "2x pants (1 light, 1 nicer)",
+      "1x shorts",
+      "Swim shorts (riad pool)",
+      "Underwear + socks (7 days worth)",
+      "Comfortable walking shoes (uneven medina streets)",
+      "1x sandals or slides",
+      "Sunglasses",
+      "Sun hat or cap",
+      "Scarf (also for dust in desert)"
+    ],
+    "tech": [
+      "European Type C/E plug adapter (2 round prongs)",
+      "Power bank",
+      "Phone charger + cable",
+      "Camera / DSLR (optional)",
+      "Headphones",
+      "Small day backpack"
+    ],
+    "docs": [
+      "Passport (valid through March 2027)",
+      "Physical + digital copies of flight confirmations",
+      "Physical + digital copies of riad bookings",
+      "Physical + digital copies of Sahara tour booking",
+      "Travel insurance policy",
+      "No-FX-fee credit card (Scotiabank Passport, EQ Bank, Wise)",
+      "$200-300 CAD backup cash",
+      "Written address of Riad De Vinci (for customs)"
+    ],
+    "misc": [
+      "Sunscreen (high SPF)",
+      "Lip balm with SPF",
+      "Basic meds (Imodium, Advil, Tums)",
+      "Reusable water bottle",
+      "Small toiletry kit",
+      "Wet wipes (desert use)",
+      "Duty-free alcohol (1 L pp allowed into Morocco)"
+    ]
+  },
+  "checked": {},
+  "quests": [
+    {"id": "q1", "text": "Sunset from a rooftop at Jemaa el-Fnaa", "category": "cultural", "done": false, "city": "marrakech"},
+    {"id": "q2", "text": "Full hammam ritual (scrub + massage)", "category": "cultural", "done": false, "city": "marrakech"},
+    {"id": "q3", "text": "Dinner at Dar Essalam with live music", "category": "food", "done": false, "city": "marrakech"},
+    {"id": "q4", "text": "Bargain successfully with the walk-away trick", "category": "cultural", "done": false, "city": "marrakech"},
+    {"id": "q5", "text": "Camel ride into Erg Chebbi at sunset", "category": "adventure", "done": false, "city": "merzouga"},
+    {"id": "q6", "text": "Sleep under the stars in the desert", "category": "adventure", "done": false, "city": "merzouga"},
+    {"id": "q7", "text": "Sunrise over the dunes", "category": "adventure", "done": false, "city": "merzouga"},
+    {"id": "q8", "text": "Sandboarding on the dunes", "category": "activity", "done": false, "city": "merzouga"},
+    {"id": "q9", "text": "Fresh grilled fish at Essaouira port", "category": "food", "done": false, "city": "essaouira"},
+    {"id": "q10", "text": "Walk the Skala ramparts at sunset", "category": "cultural", "done": false, "city": "essaouira"},
+    {"id": "q11", "text": "Catch a MOGA OFF party in the Essaouira medina", "category": "activity", "done": false, "city": "essaouira"},
+    {"id": "q12", "text": "Try tagine with caramel prunes + beef + almonds (Sean's pick)", "category": "food", "done": false, "city": "any"},
+    {"id": "q13", "text": "Msemen breakfast from a street vendor", "category": "food", "done": false, "city": "any"},
+    {"id": "q14", "text": "Couscous on a Friday (like locals)", "category": "food", "done": false, "city": "any"},
+    {"id": "q15", "text": "Fresh OJ at Jemaa el-Fnaa (4-5 MAD)", "category": "food", "done": false, "city": "marrakech"}
+  ],
+  "hotelCoords": {
+    "marrakech": {"lat": 31.6295, "lon": -7.9891, "name": "Riad De Vinci"},
+    "essaouira": {"lat": 31.5085, "lon": -9.7595, "name": "Essaouira Riad"},
+    "merzouga": {"lat": 31.0977, "lon": -4.0086, "name": "Luxury Desert Camp"}
+  },
+  "cityCoords": {
+    "marrakech": {"lat": 31.6295, "lon": -7.9811},
+    "essaouira": {"lat": 31.5085, "lon": -9.7595},
+    "merzouga": {"lat": 31.0977, "lon": -4.0086},
+    "casablanca": {"lat": 33.5731, "lon": -7.5898},
+    "ouarzazate": {"lat": 30.9189, "lon": -6.8934},
+    "kelaat mgouna": {"lat": 31.2333, "lon": -6.1333},
+    "tinghir": {"lat": 31.5145, "lon": -5.5330}
+  },
+  "flags": {
+    "toronto": "🇨🇦",
+    "canada": "🇨🇦",
+    "yyz": "🇨🇦",
+    "morocco": "🇲🇦",
+    "marrakech": "🇲🇦",
+    "rak": "🇲🇦",
+    "casablanca": "🇲🇦",
+    "cmn": "🇲🇦",
+    "essaouira": "🇲🇦",
+    "merzouga": "🇲🇦",
+    "sahara": "🇲🇦",
+    "ouarzazate": "🇲🇦"
+  },
+  "info": {
+    "currency": {
+      "name": "Moroccan Dirham (MAD)",
+      "rate": "~7 MAD = 1 CAD",
+      "notes": "Closed currency, cannot export more than 1000 MAD. Always pay in MAD not CAD (avoids Dynamic Currency Conversion fee of 7-10%). Best ATM: BMCI (4000 MAD limit, 35 MAD fee)."
+    },
+    "language": {
+      "primary": "Arabic Darija and French",
+      "tourist_areas": "English widely spoken",
+      "useful_phrases": [
+        "Salaam alaikum - hello",
+        "Shukran - thank you",
+        "La, shukran - no, thank you (for henna ladies)",
+        "Compteur, s'il vous plaît - meter, please (for taxis)",
+        "Bshhal? - how much?"
+      ]
+    },
+    "sim_card": "Inwi (avoid Orange). Get at RAK airport, ~$15 CAD.",
+    "tipping": {
+      "restaurants": "5-10% if no service charge",
+      "porter": "10-20 MAD per bag",
+      "half_day_guide": "50-100 MAD",
+      "hammam_attendant": "20-50 MAD",
+      "taxi": "Round up"
+    },
+    "drinking": "Legal for non-Muslims in licensed venues (bars, restaurants, hotels). No public street drinking. Buy duty-free at YYZ (1 L pp). Big supermarkets (Carrefour, Acima) have alcohol sections. Riad De Vinci: confirm policy on rooftop drinking when checking in.",
+    "food_price_ceilings": {
+      "tagine": "40-60 MAD max, more = scam",
+      "msemen": "3-5 MAD",
+      "harira": "6-10 MAD",
+      "couscous": "60 MAD max, more = scam",
+      "fresh_oj_at_jemaa": "4-5 MAD"
+    },
+    "scams_to_expect": [
+      "'The square is closed' - it isn't, walk past",
+      "Free henna - not free, will demand 200-500 MAD",
+      "Taxi meter broken - walk to next taxi",
+      "Directions from strangers - they'll ask for money after, use Google Maps",
+      "Snake charmers at Jemaa - don't take photos unless you want to pay"
+    ],
+    "weather_expectations": {
+      "marrakech_days": "28-34 C",
+      "marrakech_nights": "16-20 C",
+      "essaouira": "22-26 C with ocean breeze",
+      "sahara_night": "5-15 C (bring a layer)"
+    },
+    "moga_festival": "Sep 30 - Oct 4, 2026 at Sofitel Mogador. MOGA OFF pre-parties run in the Essaouira medina Sep 27-29 (our dates). Electronic music blended with Gnaoua. Free medina parties, ticketed main event.",
+    "seans_notes": {
+      "source": "Sean, a Moroccan friend",
+      "key_rules": [
+        "Always bargain in markets, use the walk-away trick",
+        "Ignore strangers offering directions",
+        "Taxi meter must be on before you get in",
+        "Amazigh > Berber (more respectful)",
+        "Friday is cultural Sunday, but tourist areas run 7/7"
+      ],
+      "specific_spots": [
+        "Dar Essalam (Marrakech): oldest restaurant, live music",
+        "Café Clock (Marrakech + Chefchaouen + Fez): casual, camel burger",
+        "The Coast Cafe (Essaouira): specific pick",
+        "@toparadise.Morocco on Instagram: small-group Sahara tours"
+      ]
+    }
+  },
+  "bookings": [
+    {"id": "b1", "type": "flight", "vendor": "Royal Air Maroc", "status": "not_booked", "cost": "$1,136 CAD pp", "notes": "Book within next 2 weeks"},
+    {"id": "b2", "type": "riad", "vendor": "Riad De Vinci (Marrakech)", "status": "not_booked", "cost": "~$140/night x 5 nights split", "notes": "Book Sep 21-24, Sep 26-27, Sep 29-30 as 3 separate bookings. Email for luggage hold + same room."},
+    {"id": "b3", "type": "riad", "vendor": "Essaouira riad (TBD)", "status": "not_booked", "cost": "~$100/night x 2", "notes": "URGENT: book within 48 hours due to MOGA OFF availability pressure. Consider Riad Dar Maya or Villa Maroc."},
+    {"id": "b4", "type": "tour", "vendor": "Sahara tour operator", "status": "not_booked", "cost": "$185-310 CAD pp (luxury camp tier)", "notes": "DM @toparadise.Morocco first. Fallback to GetYourGuide luxury camp option."},
+    {"id": "b5", "type": "transport", "vendor": "Private driver Marrakech → Essaouira", "status": "not_booked", "cost": "~$100 CAD total split", "notes": "Book via Riad De Vinci 2 weeks before"},
+    {"id": "b6", "type": "transport", "vendor": "Supratours bus Essaouira → Marrakech", "status": "not_booked", "cost": "~$40 CAD total", "notes": "Book early September via markoub.ma (bus systems only allow booking 30-60 days out)"},
+    {"id": "b7", "type": "dining", "vendor": "Dar Essalam reservation", "status": "not_booked", "cost": "TBD", "notes": "Book 1-2 weeks before trip for Wed Sep 23 dinner"},
+    {"id": "b8", "type": "insurance", "vendor": "Travel insurance", "status": "not_booked", "cost": "~$50 CAD pp", "notes": "Non-refundable flight = insurance essential"}
+  ],
+  "budget_estimate": {
+    "per_person_cad": {
+      "flight": 1136,
+      "accommodation_marrakech": 350,
+      "accommodation_essaouira": 100,
+      "sahara_tour": 300,
+      "food": 250,
+      "drinks": 200,
+      "transport_local": 75,
+      "hammam_spa": 80,
+      "activities": 100,
+      "tips_misc": 100,
+      "shopping": 150,
+      "total_low": 2500,
+      "total_mid": 2900,
+      "total_high": 3400
+    }
+  }
+}
