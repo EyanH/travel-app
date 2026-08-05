@@ -1075,12 +1075,45 @@ function Landing({auth}){
     </div>
   );
 }
+function ImportView({slug,auth,go}){
+  const owner=isOwner(auth.user);
+  const [err,setErr]=useState("");
+  const ranRef=useRef(false);
+  const run=useCallback(async()=>{
+    if(!(fb&&fb.db)){ setErr("Sync is not available."); return; }
+    setErr("");
+    try{
+      const res=await fetch(`trips/${encodeURIComponent(slug)}.json`,{cache:"no-store"});
+      if(!res.ok) throw new Error(`Couldn't find trips/${slug}.json (${res.status}).`);
+      const data=await res.json();
+      data.slug=slug; if(data.archived==null) data.archived=false; data.createdAt=data.createdAt||Date.now();
+      await fb.db.collection("trips").doc(slug).set(data,{merge:true});
+      store.putLocal(slug,normalize(slug,data));
+      go(slug);
+    }catch(e){ setErr(String((e&&e.message)||e)); }
+  },[slug,go]);
+  useEffect(()=>{ if(owner && !ranRef.current){ ranRef.current=true; run(); } },[owner,run]);
+  return (
+    <div className="wrap">
+      <div className="topbar"><div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div>{auth.user&&<AccountChip auth={auth}/>}</div>
+      <div className="landing">
+        <div style={{fontSize:46,marginBottom:8}}>📦</div>
+        <h1>Import “{slug}”</h1>
+        {!owner ? <><p>Sign in as the owner to add this trip to your account.</p><button className="btn primary" onClick={auth.signIn}>Sign in with Google</button></>
+          : err ? <><p className="err">{err}</p><button className="btn" onClick={run}>Try again</button></>
+          : <p className="muted">Building your trip…</p>}
+      </div>
+    </div>
+  );
+}
 function App(){
   const [slug,go]=useRoute();
   const {user,ready,signIn,signOut}=useAuth();
   useEffect(()=>{ if(ready && isOwner(user)) ensureSeed(); },[ready,user]);
   if(!ready) return <div className="loading"><div className="spinner"/>Loading…</div>;
   const auth={user,signIn,signOut};
+  const importSlug=new URLSearchParams(location.search).get("import");
+  if(importSlug) return <ImportView slug={importSlug} auth={auth} go={go}/>;
   if(slug) return <TripDetail slug={slug} go={go} auth={auth}/>;
   if(isOwner(user)) return <Homepage go={go} auth={auth}/>;
   return <Landing auth={auth}/>;

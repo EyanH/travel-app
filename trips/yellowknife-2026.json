@@ -1,0 +1,99 @@
+{
+  "slug": "yellowknife-2026",
+  "country": "Canada",
+  "archived": false,
+  "meta": {
+    "tripName": "Yellowknife",
+    "subtitle": "Toronto → Yellowknife · Aurora & winter with the crew",
+    "startDate": "2026-11-21",
+    "endDate": "2026-11-28",
+    "stats": [
+      {"n": "8", "l": "days"},
+      {"n": "3", "l": "friends"},
+      {"n": "7", "l": "aurora nights"},
+      {"n": "2", "l": "flights"}
+    ]
+  },
+  "days": [
+    {"id":"d1","date":"Sat, Nov 21","day":"Day 1","title":"Fly to Yellowknife","location":"Toronto → Yellowknife","type":"travel","emoji":"✈️","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Bullocks Bistro (Old Town)","Grab room snacks"],"tips":"Late Nov: ~6h daylight, highs near -15°C, lows -25 to -30°C. Cover all skin. Keep phone/camera batteries warm.","details":[
+      {"time":"10:00 AM","text":"Depart Toronto (YYZ) · AC107 to Vancouver","sub":"Long travel day, charge everything"},
+      {"time":"1:23 PM","text":"Connect at Vancouver (YVR)","sub":"1h22m layover, grab food"},
+      {"time":"5:19 PM","text":"Land Yellowknife (YZF)","sub":"Dark and very cold, parkas on before you step out"},
+      {"time":"~6:00 PM","text":"Check in · Explorer Hotel","sub":"Conf 593403594, due on arrival C$2,151.66 (~C$717 each)"},
+      {"time":"Evening","text":"First aurora watch if clear","sub":"Ease into the cold, just past town lights"}
+    ]},
+    {"id":"d2","date":"Sun, Nov 22","day":"Day 2","title":"Dogsledding + Aurora","location":"Yellowknife","type":"trek","emoji":"🛷","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Aurora Village (heated teepees)","Book a tour with hotel pickup"],"tips":"Operators supply outer gear but wear your own base layers. Hand and foot warmers are gold.","details":[
+      {"time":"Morning","text":"Dogsledding tour (group)","sub":"Eyan and Kai's pick, everyone in. Beck's Kennels or Enodah."},
+      {"time":"Afternoon","text":"Warm up and rest at the hotel","sub":"Short daylight, recharge for aurora"},
+      {"time":"~10 PM","text":"Aurora hunt","sub":"Best 10pm-2am, Aurora Village or Prelude Lake"}
+    ]},
+    {"id":"d3","date":"Mon, Nov 23","day":"Day 3","title":"Snowmobiling + Aurora","location":"Yellowknife","type":"trek","emoji":"🏔️","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Bush Pilots' Monument","Ice road photo if open"],"tips":"Snowmobiling is windy, so it feels far colder. Balaclava and goggles essential.","details":[
+      {"time":"Late morning","text":"Snowmobiling on Great Slave Lake","sub":"Aush's pick, guided sled tours run on the frozen lake"},
+      {"time":"Afternoon","text":"Old Town wander","sub":"Bush Pilots' Monument view over the lake"},
+      {"time":"Evening","text":"Aurora","sub":"Check Astronomy North forecast, chase clear skies"}
+    ]},
+    {"id":"d4","date":"Tue, Nov 24","day":"Day 4","title":"Ice Fishing + Aurora","location":"Great Slave Lake","type":"trek","emoji":"🎣","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Try Arctic char for dinner","Aurora from the lake ice"],"tips":"Great Slave Lake is one of the deepest lakes in North America, a bucket-list catch.","details":[
+      {"time":"Midday","text":"Ice fishing on Great Slave Lake","sub":"Eyan's pick, guided trips set up heated huts (trout, whitefish, char)"},
+      {"time":"Afternoon","text":"Warm up / cook the catch"},
+      {"time":"Evening","text":"Aurora"}
+    ]},
+    {"id":"d5","date":"Wed, Nov 25","day":"Day 5","title":"Wood Bison + Night Skiing","location":"Highway 3 / Ski Club","type":"explore","emoji":"🦬","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Yellowknife Ski Club","Frozen-lake sunset (~3pm)"],"tips":"Wood bison are huge and wild, stay in the vehicle and keep your distance.","details":[
+      {"time":"Daytime","text":"Wood bison viewing drive","sub":"Kai's pick, wild wood bison along Highway 3 toward Behchokǫ̀"},
+      {"time":"Evening","text":"Night skiing / cross-country","sub":"Aush's pick, lit trails at the Yellowknife Ski Club"},
+      {"time":"Late","text":"Aurora if there's energy"}
+    ]},
+    {"id":"d6","date":"Thu, Nov 26","day":"Day 6","title":"Flex Day + Aurora","location":"Yellowknife","type":"flex","emoji":"🧭","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Prince of Wales Northern Heritage Centre","Old Town Glassworks"],"tips":"Keep a flex night open, aurora needs clear skies so save your best-odds night here.","details":[
+      {"time":"Morning","text":"Slow start / catch any missed priority"},
+      {"time":"Afternoon","text":"Prince of Wales Northern Heritage Centre","sub":"Free, warm, great NWT + Indigenous history"},
+      {"time":"Evening","text":"Aurora (chase the clearest night)"}
+    ]},
+    {"id":"d7","date":"Fri, Nov 27","day":"Day 7","title":"Old Town + Final Aurora","location":"Yellowknife","type":"explore","emoji":"🌌","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Bullocks Bistro","Local art / souvenirs"],"tips":"Last full night, give the aurora your best shot, dress warmest and stay out late if clear.","details":[
+      {"time":"Daytime","text":"Old Town + lakeshore","sub":"Frozen-in houseboats, Ragged Ass Road, Bush Pilots' Monument"},
+      {"time":"Dinner","text":"Bullocks Bistro","sub":"Iconic fish shack, arrive early, cash friendly"},
+      {"time":"Evening","text":"Last big aurora push"}
+    ]},
+    {"id":"d8","date":"Sat, Nov 28","day":"Day 8","title":"Fly Home (red-eye)","location":"Yellowknife → Toronto","type":"travel","emoji":"🏠","accommodation":null,"suggestions":[],"tips":"Return is overnight, keep a warm layer handy, you land early Sunday.","details":[
+      {"time":"Morning","text":"Slow morning, pack, late checkout if possible"},
+      {"time":"Afternoon","text":"Last town wander / warm cafe"},
+      {"time":"~4:15 PM","text":"Head to YZF airport","sub":"Small airport, still arrive ~90 min early"},
+      {"time":"6:10 PM","text":"Depart YZF · AC1198 to Edmonton","sub":"4h05m layover in Edmonton"},
+      {"time":"1:20 AM +1","text":"AC176 Edmonton → Toronto","sub":"Arrive YYZ 6:07 AM Sun Nov 29, sleep on the plane"}
+    ]}
+  ],
+  "flights": [
+    {"id":"f1","route":"YYZ → YVR → YZF","date":"Sat, Nov 21","airline":"Air Canada","flight":"AC 107 + AC 254","depart":"10:00 AM YYZ","arrive":"5:19 PM YZF","duration":"9h 19m","stop":"1h 22m in Vancouver (YVR)","cost":"","confirmation":"CHZCWJ"},
+    {"id":"f2","route":"YZF → YEG → YYZ","date":"Sat, Nov 28","airline":"Air Canada","flight":"AC 1198 + AC 176","depart":"6:10 PM YZF","arrive":"6:07 AM YYZ (Sun Nov 29)","duration":"9h 57m","stop":"4h 5m in Edmonton (YEG)","cost":"","confirmation":"CHZCWJ"}
+  ],
+  "flnotes": "Booking reference CHZCWJ · 3 adults · all Economy.\nOut Sat Nov 21: AC107 YYZ 10:00 → YVR 13:23, 1h22m layover, AC254 YVR 14:45 → YZF 17:19.\nReturn (red-eye) Sat Nov 28: AC1198 YZF 18:10 → YEG 21:15, 4h05m layover, AC176 YEG 01:20 → YYZ 06:07 (Sun Nov 29).",
+  "packing": {
+    "Warm Layers": ["Insulated parka (rated to -30°C)","Thermal base layers, top & bottom (x2)","Fleece or wool mid-layer","Insulated snow pants","Wool sweater","Thick wool socks (x5)"],
+    "Extremities": ["Insulated waterproof winter boots","Warm toque","Balaclava or neck gaiter","Insulated mittens + thin liner gloves","Hand & foot warmers (lots)","Goggles or sunglasses"],
+    "Aurora & Tech": ["Camera with manual mode","Sturdy tripod","Spare batteries (keep warm)","Headlamp (red-light mode)","Phone + charger","Power bank"],
+    "Docs & Money": ["ID / passport","Flight confirmation CHZCWJ","Hotel confirmation 593403594","No-FX credit card","Some cash"],
+    "Misc": ["Lip balm & heavy moisturizer","Thermos","Reusable water bottle","Basic meds","Room snacks"]
+  },
+  "checked": {},
+  "quests": [
+    {"id":"q1","text":"See the northern lights (aurora)","category":"adventure","done":false,"city":"yellowknife"},
+    {"id":"q2","text":"Go dogsledding","category":"adventure","done":false,"city":"yellowknife"},
+    {"id":"q3","text":"Ice fishing on Great Slave Lake","category":"activity","done":false,"city":"yellowknife"},
+    {"id":"q4","text":"Snowmobiling on the frozen lake","category":"adventure","done":false,"city":"yellowknife"},
+    {"id":"q5","text":"Night skiing at the Ski Club","category":"activity","done":false,"city":"yellowknife"},
+    {"id":"q6","text":"Wood bison viewing tour","category":"adventure","done":false,"city":"yellowknife"},
+    {"id":"q7","text":"Photograph the aurora on a tripod","category":"activity","done":false,"city":"yellowknife"},
+    {"id":"q8","text":"Eat at Bullocks Bistro","category":"food","done":false,"city":"yellowknife"},
+    {"id":"q9","text":"Try Arctic char","category":"food","done":false,"city":"yellowknife"},
+    {"id":"q10","text":"Stand on frozen Great Slave Lake","category":"adventure","done":false,"city":"yellowknife"},
+    {"id":"q11","text":"Visit Prince of Wales Northern Heritage Centre","category":"cultural","done":false,"city":"yellowknife"}
+  ],
+  "hotelCoords": {"yellowknife": {"lat":62.4526,"lon":-114.3706,"name":"Explorer Hotel"}},
+  "cityCoords": {"yellowknife": {"lat":62.454,"lon":-114.372}},
+  "info": [
+    {"title":"🌌 Aurora (the whole point)","content":"Yellowknife sits under the auroral oval and is one of the best places on Earth for the northern lights, and late November is peak season with long, dark, often clear nights.\n\n- Best viewing ~10pm to 2am, away from town lights (Aurora Village, Prelude Lake, or a guided tour with heated shelters).\n- You'll stand still for hours, dress for extreme cold.\n- Cold kills batteries fast, keep spares in an inside pocket.\n- Check Astronomy North / UAF aurora forecast and chase the clear nights."},
+    {"title":"🎯 Our priorities","content":"Aurora: everyone, every clear night (a given).\n\nAush: Snowmobiling + night skiing\nEyan: Ice fishing + dogsledding\nKai: Wood bison viewing tour + dogsledding\n\nDogsledding is the group activity (2 of 3 want it). The schedule covers everyone's top two."},
+    {"title":"🏨 Hotel — Explorer Hotel","content":"Confirmation 593403594 · Deluxe Room (Family) · 1 room, 3 adults · 7 nights from Sat Nov 21.\nTotal C$2,151.66, due on arrival, nothing prepaid (~C$717 each).\nCentral Yellowknife."},
+    {"title":"🧊 Cold & daylight","content":"Late November: highs around -15°C, lows -25 to -30°C, colder with windchill. Only ~6 hours of daylight (sun up ~9am, down ~3:30pm), so do activities early and save evenings for aurora. Frostbite risk in minutes on exposed skin, cover face, ears, hands."},
+    {"title":"💱 Currency","content":"Canadian Dollar (CAD), no exchange needed. Tap works most places, carry a little cash for spots like Bullocks Bistro."},
+    {"title":"🍽 Eat & drink","content":"Bullocks Bistro (Old Town fish shack, iconic), Dancing Moose Cafe (breakfast), NWT Brewing / The Woodyard (beer + food). Try Arctic char and local fish. Small town, arrive early."}
+  ]
+}
