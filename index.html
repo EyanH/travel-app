@@ -16,6 +16,7 @@
 <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <style>
   :root{
@@ -252,6 +253,16 @@
 
   .loading{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:14px}
   .spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  .landing{max-width:520px;margin:13vh auto;text-align:center;padding:0 20px;animation:rise .5s both}
+  .landing h1{font-size:40px;margin-bottom:12px;letter-spacing:-.5px}
+  .landing p{color:var(--muted);margin-bottom:24px;font-size:15px;line-height:1.6}
+  .ro-banner{margin:16px 0 0;padding:11px 15px;background:rgba(120,187,255,.08);border:1px solid rgba(120,187,255,.28);border-radius:12px;font-size:13.5px;color:#a9d1ff;display:flex;gap:9px;align-items:center}
+  .ro-banner a{cursor:pointer;text-decoration:underline;font-weight:600}
+  .ed-ro{white-space:pre-wrap;word-break:break-word}
+  .acct{display:inline-flex;align-items:center;gap:8px;background:rgba(27,33,45,.7);border:1px solid var(--border);border-radius:999px;padding:4px 6px 4px 11px;backdrop-filter:blur(8px)}
+  .acct-img{width:22px;height:22px;border-radius:50%;object-fit:cover}
+  .acct-name{font-size:13px;font-weight:600}
+  .editor-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border2)}
 </style>
 </head>
 <body>
@@ -716,12 +727,35 @@ const FIREBASE_CONFIG = {
   appId:"1:778858870676:web:70aa64cd6171fbbff3c181"
 };
 const FIREBASE_ON = !!FIREBASE_CONFIG.projectId;
+const OWNER_EMAILS = ["eyan.howlader@gmail.com"];
 let fb = null;
 function initFirebase(){
   if(!FIREBASE_ON || fb) return fb;
-  try{ const app=firebase.initializeApp(FIREBASE_CONFIG); fb={db:firebase.firestore(app)}; }
+  try{ const app=firebase.initializeApp(FIREBASE_CONFIG); fb={db:firebase.firestore(app), auth:firebase.auth(app)}; }
   catch(e){ console.warn("Firebase init failed:",e); fb=null; }
   return fb;
+}
+initFirebase();
+function emailKey(e){ return String(e||"").toLowerCase().replace(/[^a-z0-9]/g,"_"); }
+function firstNameFrom(user){ if(!user) return "You"; const n=(user.displayName||"").trim(); if(n) return n.split(/\s+/)[0];
+  const lp=((user.email||"").split("@")[0]||"").replace(/[._-]+/g," ").trim(); return (lp.split(" ")[0]||"You").replace(/^./,c=>c.toUpperCase()); }
+function isOwner(user){ return !!user && OWNER_EMAILS.includes((user.email||"").toLowerCase()); }
+function canEditTrip(user, trip){ if(isOwner(user)) return true; if(!user||!trip) return false;
+  return (trip.editors||[]).map(e=>String(e).toLowerCase()).includes((user.email||"").toLowerCase()); }
+const CanEdit = React.createContext(true);
+function useAuth(){
+  const [user,setUser]=useState(null); const [ready,setReady]=useState(!(FIREBASE_ON&&fb&&fb.auth));
+  useEffect(()=>{ if(!(FIREBASE_ON&&fb&&fb.auth)){ setReady(true); return; }
+    const unsub=fb.auth.onAuthStateChanged(u=>{ setUser(u); setReady(true); }); return ()=>unsub(); },[]);
+  const signIn=useCallback(()=>{ if(!(fb&&fb.auth)) return; const p=new firebase.auth.GoogleAuthProvider();
+    fb.auth.signInWithPopup(p).catch(e=>{ if(e&&(e.code==="auth/popup-blocked"||e.code==="auth/cancelled-popup-request"||e.code==="auth/operation-not-supported-in-this-environment")) fb.auth.signInWithRedirect(p); else console.warn("sign-in failed",e); }); },[]);
+  const signOut=useCallback(()=>{ if(fb&&fb.auth) fb.auth.signOut(); },[]);
+  return {user,ready,signIn,signOut};
+}
+function AccountChip({auth}){
+  const u=auth.user;
+  if(!u) return <button className="btn sm" onClick={auth.signIn}>Sign in</button>;
+  return <div className="acct">{u.photoURL?<img src={u.photoURL} className="acct-img" alt="" referrerPolicy="no-referrer" onError={e=>{e.target.style.display='none';}}/>:null}<span className="acct-name">{firstNameFrom(u)}</span><button className="icon-btn" title="Sign out" onClick={auth.signOut}>⎋</button></div>;
 }
 
 /* ============ FLAGS / COUNTRY ============ */
@@ -841,24 +875,42 @@ function weekdayShort(dateStr){ const m={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul
 
 /* ============ EDITABLE ============ */
 function Editable({value,onChange,placeholder="",className="",multiline=false,tag="span"}){
+  const canEdit=React.useContext(CanEdit);
   const ref=useRef(null); const Tag=tag;
   const commit=()=>{ const t=ref.current.innerText.replace(/\n+$/,""); if(t!==(value||"")) onChange(t); };
-  useEffect(()=>{ if(ref.current&&ref.current.innerText!==(value||"")) ref.current.innerText=value||""; },[value]);
+  useEffect(()=>{ if(canEdit&&ref.current&&ref.current.innerText!==(value||"")) ref.current.innerText=value||""; },[value,canEdit]);
+  if(!canEdit) return <Tag className={`ed-ro ${className}`}>{value||""}</Tag>;
   return <Tag ref={ref} className={`ed ${!value?"empty":""} ${className}`} data-ph={placeholder} contentEditable suppressContentEditableWarning
     onBlur={commit} onKeyDown={(e)=>{ if(!multiline&&e.key==="Enter"){e.preventDefault();e.target.blur();} }}>{value||""}</Tag>;
 }
 
 /* ============ APP ============ */
+function Landing({auth}){
+  return (
+    <div className="wrap">
+      <div className="topbar"><div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div></div>
+      <div className="landing">
+        <div style={{fontSize:46,marginBottom:8}}>🧭</div>
+        <h1>A private travel planner</h1>
+        <p>This homepage is private to the owner. If someone shared a specific trip with you, open that link directly. If you're the owner, sign in.</p>
+        <button className="btn primary" onClick={auth.signIn}>Sign in with Google</button>
+      </div>
+    </div>
+  );
+}
 function App(){
   const [slug,go]=useRoute();
-  const [ready,setReady]=useState(false);
-  useEffect(()=>{ initFirebase(); ensureSeed(); setReady(true); },[]);
+  const {user,ready,signIn,signOut}=useAuth();
+  useEffect(()=>{ if(ready && isOwner(user)) ensureSeed(); },[ready,user]);
   if(!ready) return <div className="loading"><div className="spinner"/>Loading…</div>;
-  return slug ? <TripDetail slug={slug} go={go}/> : <Homepage go={go}/>;
+  const auth={user,signIn,signOut};
+  if(slug) return <TripDetail slug={slug} go={go} auth={auth}/>;
+  if(isOwner(user)) return <Homepage go={go} auth={auth}/>;
+  return <Landing auth={auth}/>;
 }
 
 /* ============ HOMEPAGE ============ */
-function Homepage({go}){
+function Homepage({go,auth}){
   const [trips,setTrips]=useState([]);
   const [showArchived,setShowArchived]=useState(false);
   const [modal,setModal]=useState(false);
@@ -888,6 +940,7 @@ function Homepage({go}){
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
           {archivedCount>0 && <button className="btn ghost sm" onClick={()=>setShowArchived(v=>!v)}>{showArchived?"Hide":"Show"} archived ({archivedCount})</button>}
           <span className="syncbadge"><span className={"dot "+status}/>{status==="live"?"Live sync":status==="error"?"Offline":status==="saving"?"Connecting…":"Local only"}</span>
+          <AccountChip auth={auth}/>
         </div>
       </div>
 
@@ -974,8 +1027,9 @@ function NewTripModal({onClose,onCreated}){
 
 /* ============ TRIP DETAIL ============ */
 const TABS=[{k:"itinerary",label:"Itinerary",icon:"🗺️"},{k:"flights",label:"Flights",icon:"✈️"},{k:"packing",label:"Packing",icon:"🎒"},{k:"quests",label:"Quests",icon:"⚔️"},{k:"info",label:"Info",icon:"📔"}];
-function TripDetail({slug,go}){
+function TripDetail({slug,go,auth}){
   const [trip,setTrip]=useState(()=>{ const t=store.loadTrip(slug); return t?normalize(slug,t):null; });
+  const [docLoaded,setDocLoaded]=useState(!FIREBASE_ON);
   const [tab,setTab]=useState("itinerary");
   const [saveState,setSaveState]=useState("idle");
   const [menu,setMenu]=useState(false);
@@ -984,7 +1038,9 @@ function TripDetail({slug,go}){
 
   useEffect(()=>{
     if(!(FIREBASE_ON&&fb)) return;
-    const unsub=fb.db.collection("trips").doc(slug).onSnapshot(doc=>{ if(doc.exists&&!savingRef.current){ const d=normalize(slug,doc.data()); store.putLocal(slug,d); setTrip(d); } });
+    const unsub=fb.db.collection("trips").doc(slug).onSnapshot(doc=>{ setDocLoaded(true);
+      if(doc.exists&&!savingRef.current){ const d=normalize(slug,doc.data()); store.putLocal(slug,d); setTrip(d); }
+    }, e=>{ setDocLoaded(true); console.warn(e); });
     return()=>unsub();
   },[slug]);
 
@@ -992,20 +1048,25 @@ function TripDetail({slug,go}){
     setSaveState("saving"); savingRef.current=true; clearTimeout(timer.current);
     timer.current=setTimeout(()=>{ store.saveTrip(slug,next); setSaveState("idle"); savingRef.current=false; },700); return next; }); },[slug]);
 
-  if(!trip) return <div className="wrap loading"><p>Trip “{slug}” not found.</p><button className="btn" onClick={()=>go(null)}>← Back to trips</button></div>;
+  if(!trip){
+    if(!docLoaded) return <div className="wrap loading"><div className="spinner"/>Loading trip…</div>;
+    return <div className="wrap loading"><p>Trip “{slug}” not found.</p><button className="btn" onClick={()=>go(null)}>← Back to trips</button></div>;
+  }
   const m=trip.meta||{}; const country=trip.country||detectCountry(trip); const hero=heroFor(trip,country); const cd=countdown(m.startDate,m.endDate);
+  const owner=isOwner(auth.user); const canEdit=canEditTrip(auth.user,trip);
 
   return (
-    <div>
+    <CanEdit.Provider value={canEdit}>
       <div className="hero">
         <div className="bg" style={{backgroundImage:hero?`url("${hero}")`:"linear-gradient(145deg,#1f6feb66,#a371f766)"}}/>
         <div className="grad"/>
         <div className="top"><div className="wrap">
           <button className="btn sm" onClick={()=>go(null)}>← Trips</button>
-          <div style={{position:"relative",display:"flex",gap:8}}>
-            <span className="syncbadge"><span className={"dot "+(saveState==="saving"?"saving":(FIREBASE_ON?"live":"local"))}/>{saveState==="saving"?"Saving…":(FIREBASE_ON?"Live sync":"Saved locally")}</span>
-            <button className="btn sm" onClick={()=>setMenu(v=>!v)}>⚙︎</button>
-            {menu && <SettingsMenu trip={trip} country={country} update={update} onDelete={()=>{store.deleteTrip(slug);go(null);}} close={()=>setMenu(false)}/>}
+          <div style={{position:"relative",display:"flex",gap:8,alignItems:"center"}}>
+            {canEdit && <span className="syncbadge"><span className={"dot "+(saveState==="saving"?"saving":"live")}/>{saveState==="saving"?"Saving…":"Live sync"}</span>}
+            <AccountChip auth={auth}/>
+            {owner && <button className="btn sm" onClick={()=>setMenu(v=>!v)}>⚙︎</button>}
+            {menu && owner && <SettingsMenu trip={trip} country={country} update={update} onDelete={()=>{store.deleteTrip(slug);go(null);}} close={()=>setMenu(false)}/>}
           </div>
         </div></div>
         <div className="htext"><div className="wrap"><div className="inner">
@@ -1016,6 +1077,7 @@ function TripDetail({slug,go}){
       </div>
 
       <div className="wrap">
+        {!canEdit && <div className="ro-banner"><span>👁</span><span>View only. {auth.user ? "Only the owner and invited editors can change this trip." : <>Have edit access? <a onClick={auth.signIn}>Sign in</a>.</>}</span></div>}
         <StatRow trip={trip} update={update}/>
         <div className="tabsbar"><div className="tabs">
           {TABS.map(t=><div key={t.k} className={"tab "+(tab===t.k?"active":"")} onClick={()=>setTab(t.k)}><span>{t.icon}</span>{t.label}</div>)}
@@ -1023,12 +1085,12 @@ function TripDetail({slug,go}){
         <div style={{paddingBottom:80}} key={tab} className="rise">
           {tab==="itinerary" && <Itinerary trip={trip} update={update}/>}
           {tab==="flights" && <Flights trip={trip} update={update}/>}
-          {tab==="packing" && <Packing trip={trip} update={update}/>}
+          {tab==="packing" && <Packing trip={trip} update={update} auth={auth}/>}
           {tab==="quests" && <Quests trip={trip} update={update}/>}
           {tab==="info" && <Info trip={trip} update={update}/>}
         </div>
       </div>
-    </div>
+    </CanEdit.Provider>
   );
 }
 function SettingsMenu({trip,country,update,onDelete,close}){
@@ -1040,6 +1102,11 @@ function SettingsMenu({trip,country,update,onDelete,close}){
         <input defaultValue={trip.heroImage||""} placeholder={heroFor(trip,country)?"(using a default)":"https://..."} onBlur={e=>update(t=>{t.heroImage=e.target.value.trim();return t;})}/></div>
       <div className="field" style={{marginBottom:11}}><label>Country</label>
         <input defaultValue={trip.country||country||""} placeholder="Country" onBlur={e=>update(t=>{t.country=e.target.value.trim();return t;})}/></div>
+      <div className="field" style={{marginBottom:11}}><label>Who can edit</label>
+        {(trip.editors||[]).length===0 && <div className="muted" style={{fontSize:11.5,marginBottom:4}}>Only you can edit right now.</div>}
+        {(trip.editors||[]).map((e,i)=>(<div className="editor-row" key={i}><span style={{wordBreak:"break-all"}}>{e}</span><button className="icon-btn" onClick={()=>update(t=>{t.editors.splice(i,1);return t;})}>✕</button></div>))}
+        <div className="addline" style={{marginTop:8}}><input placeholder="friend@gmail.com" onKeyDown={ev=>{ if(ev.key==="Enter"){ const v=ev.target.value.trim().toLowerCase(); if(v){ update(t=>{t.editors=t.editors||[]; if(!t.editors.includes(v)) t.editors.push(v); return t;}); ev.target.value=""; } } }}/></div>
+        <div className="muted" style={{fontSize:11,marginTop:5}}>They sign in with Google using this email. Press Enter to add.</div></div>
       <button className="btn ghost sm" style={{width:"100%",marginBottom:8}} onClick={()=>update(t=>{t.archived=!t.archived;return t;})}>{trip.archived?"Unarchive trip":"Archive trip"}</button>
       <button className="btn ghost danger sm" style={{width:"100%"}} onClick={()=>{ if(confirm(`Delete "${trip.meta?.tripName||trip.slug}"? This cannot be undone.`)) onDelete(); }}>Delete trip</button>
     </div>
@@ -1054,6 +1121,7 @@ function StatRow({trip,update}){
 
 /* ============ ITINERARY ============ */
 function Itinerary({trip,update}){
+  const canEdit=React.useContext(CanEdit);
   const days=trip.days||[];
   const addDay=()=>update(t=>{ (t.days=t.days||[]).push({id:uid("d"),date:"",day:`Day ${t.days.length+1}`,title:"New day",location:"",type:"explore",emoji:"📍",details:[],tips:"",accommodation:null,suggestions:[]}); return t; });
   return (
@@ -1062,13 +1130,14 @@ function Itinerary({trip,update}){
       {days.length>1 && <div className="rail">{days.map((d,i)=>{ const wd=weekdayShort(d.date);
         return <div className="rpill" key={d.id||i} onClick={()=>{const el=document.getElementById("day-"+(d.id||i)); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});}}>
           <div className="rw">{wd.w||("D"+(i+1))}</div><div className="rn">{wd.n||(i+1)}</div><div className="re">{d.emoji||"📍"}</div></div>; })}</div>}
-      <div className="section-title"><h2>Itinerary</h2><button className="btn sm" onClick={addDay}>+ Add day</button></div>
+      <div className="section-title"><h2>Itinerary</h2>{canEdit && <button className="btn sm" onClick={addDay}>+ Add day</button>}</div>
       {days.length===0 && <div className="card muted center">No days yet. Add your first day.</div>}
       {days.map((d,i)=><DayCard key={d.id||i} day={d} idx={i} update={update}/>)}
     </div>
   );
 }
 function DayCard({day,idx,update}){
+  const canEdit=React.useContext(CanEdit);
   const [open,setOpen]=useState(true);
   const patch=(fn)=>update(t=>{ fn(t.days[idx]); return t; });
   const cycleType=()=>patch(d=>{ d.type=TYPE_ORDER[(TYPE_ORDER.indexOf(d.type)+1)%TYPE_ORDER.length]; });
@@ -1077,15 +1146,15 @@ function DayCard({day,idx,update}){
   return (
     <div className={"card day "+type} id={"day-"+(day.id||idx)}>
       <div className="day-head">
-        <div className="day-emoji" title="Change emoji" onClick={()=>{const e=prompt("Emoji:",day.emoji||"📍");if(e!==null)patch(d=>d.emoji=e);}}>{day.emoji||"📍"}</div>
+        <div className="day-emoji" title={canEdit?"Change emoji":""} onClick={()=>{ if(!canEdit) return; const e=prompt("Emoji:",day.emoji||"📍");if(e!==null)patch(d=>d.emoji=e);}}>{day.emoji||"📍"}</div>
         <div className="day-meta">
           <div className="day-daylabel"><Editable value={day.day} onChange={v=>patch(d=>d.day=v)} placeholder="Day 1"/>{" · "}<Editable value={day.date} onChange={v=>patch(d=>d.date=v)} placeholder="Mon, Jan 1"/></div>
           <div className="day-title"><Editable value={day.title} onChange={v=>patch(d=>d.title=v)} placeholder="Title"/></div>
           <div className="day-loc">📍 <Editable value={day.location} onChange={v=>patch(d=>d.location=v)} placeholder="Location"/></div>
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
-          <span className={"type-pill "+type} onClick={cycleType} title="Change type">{TC[type].label}</span>
-          <div style={{display:"flex",gap:2}}><button className="icon-btn" onClick={()=>setOpen(o=>!o)}>{open?"▾":"▸"}</button><button className="icon-btn" onClick={del}>🗑</button></div>
+          <span className={"type-pill "+type} onClick={canEdit?cycleType:undefined} title={canEdit?"Change type":""} style={{cursor:canEdit?"pointer":"default"}}>{TC[type].label}</span>
+          <div style={{display:"flex",gap:2}}><button className="icon-btn" onClick={()=>setOpen(o=>!o)}>{open?"▾":"▸"}</button>{canEdit && <button className="icon-btn" onClick={del}>🗑</button>}</div>
         </div>
       </div>
       {open && <div style={{marginTop:14}}>
@@ -1096,16 +1165,16 @@ function DayCard({day,idx,update}){
               <div className="detail-text"><Editable value={dt.text} onChange={v=>patch(d=>d.details[j].text=v)} placeholder="What's happening"/></div>
               <div className="detail-sub"><Editable value={dt.sub} onChange={v=>patch(d=>d.details[j].sub=v)} placeholder="Notes" multiline/></div>
             </div>
-            <button className="icon-btn" onClick={()=>patch(d=>d.details.splice(j,1))}>✕</button>
+            {canEdit && <button className="icon-btn" onClick={()=>patch(d=>d.details.splice(j,1))}>✕</button>}
           </div>
         ))}
-        <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.details=d.details||[]).push({time:"",text:"",sub:""}))}>+ Add item</button>
-        {day.tips!==undefined && <div className="tips"><b>💡 Tip: </b><Editable value={day.tips} onChange={v=>patch(d=>d.tips=v)} placeholder="Add a tip" multiline/></div>}
-        <div className="accom"><span style={{fontSize:18}}>🛏</span><div style={{flex:1}}><div className="al">Accommodation</div>
-          <Editable value={day.accommodation||""} onChange={v=>patch(d=>d.accommodation=v||null)} placeholder="Hotel, riad, Airbnb…"/></div></div>
+        {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.details=d.details||[]).push({time:"",text:"",sub:""}))}>+ Add item</button>}
+        {(day.tips!==undefined && (canEdit||day.tips)) && <div className="tips"><b>💡 Tip: </b><Editable value={day.tips} onChange={v=>patch(d=>d.tips=v)} placeholder="Add a tip" multiline/></div>}
+        {(canEdit || day.accommodation) && <div className="accom"><span style={{fontSize:18}}>🛏</span><div style={{flex:1}}><div className="al">Accommodation</div>
+          <Editable value={day.accommodation||""} onChange={v=>patch(d=>d.accommodation=v||null)} placeholder="Hotel, riad, Airbnb…"/></div></div>}
         {(day.suggestions&&day.suggestions.length>0) && <div className="suggs">{day.suggestions.map((s,k)=>(
-          <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/><span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1))}>✕</span></span>))}</div>}
-        <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.suggestions=d.suggestions||[]).push("New idea"))}>+ Add suggestion</button>
+          <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/>{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1))}>✕</span>}</span>))}</div>}
+        {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.suggestions=d.suggestions||[]).push("New idea"))}>+ Add suggestion</button>}
       </div>}
     </div>
   );
@@ -1134,19 +1203,20 @@ function Weather({trip}){
 const FL_LABELS={date:"Date",airline:"Airline",flights:"Flights",flight:"Flight",depart:"Depart",arrive:"Arrive",duration:"Duration",stop:"Stop",cost:"Cost",fare:"Fare",confirmation:"Confirmation"};
 const FL_ORDER=["date","airline","flights","flight","depart","arrive","duration","stop","fare","cost","confirmation"];
 function Flights({trip,update}){
+  const canEdit=React.useContext(CanEdit);
   const flights=trip.flights||[];
   const patch=(i,fn)=>update(t=>{fn(t.flights[i]);return t;});
   const add=()=>update(t=>{(t.flights=t.flights||[]).push({id:uid("f"),route:"YYZ → ",date:"",airline:"",flight:"",depart:"",arrive:"",duration:"",stop:"",cost:"",confirmation:""});return t;});
   const flnotes=trip.flnotes;
   return (
     <div>
-      <div className="section-title"><h2>Flights</h2><button className="btn sm" onClick={add}>+ Add flight</button></div>
+      <div className="section-title"><h2>Flights</h2>{canEdit && <button className="btn sm" onClick={add}>+ Add flight</button>}</div>
       {flights.map((f,i)=>{ const keys=FL_ORDER.filter(k=>k in f); const extra=Object.keys(f).filter(k=>k!=="id"&&k!=="route"&&!FL_ORDER.includes(k));
         const shown=keys.concat(extra); return (
         <div className="card flight" key={f.id||i}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
             <div className="route"><Editable value={f.route} onChange={v=>patch(i,x=>x.route=v)} placeholder="YYZ → CMN → RAK"/></div>
-            <button className="icon-btn" onClick={()=>update(t=>{t.flights.splice(i,1);return t;})}>🗑</button>
+            {canEdit && <button className="icon-btn" onClick={()=>update(t=>{t.flights.splice(i,1);return t;})}>🗑</button>}
           </div>
           <div className="fgrid">{shown.map(k=><div key={k}><div className="fl">{FL_LABELS[k]||k}</div><div className="fv"><Editable value={String(f[k]??"")} onChange={v=>patch(i,x=>x[k]=v)} placeholder="-"/></div></div>)}</div>
         </div>); })}
@@ -1163,18 +1233,51 @@ function Flights({trip,update}){
 }
 
 /* ============ PACKING ============ */
-function Packing({trip,update}){
-  const packing=trip.packing||{}; const checked=trip.checked||{};
+function ReadOnlyPack({packing,title}){
+  const cats=Object.keys(packing||{}); if(cats.length===0) return null;
+  return (<>{title && <div className="muted small" style={{margin:"6px 0 0",fontWeight:600,textTransform:"uppercase",letterSpacing:".6px"}}>{title}</div>}
+    {cats.map(cat=>(<div className="card" key={cat}><h3 style={{fontSize:18,marginBottom:8}}>{packIcon(cat)} {cat}</h3>
+      {(packing[cat]||[]).map((item,i)=>(<div className="checkline" key={i}><div className="checkbox"/><span className="ct">{item}</span></div>))}</div>))}</>);
+}
+function Packing({trip,update,auth}){
+  const canEdit=React.useContext(CanEdit);
+  const user=auth&&auth.user;
+  const template=trip.packing||{};
+
+  if(!user){
+    return (<div>
+      <div className="section-title"><h2>Packing</h2></div>
+      <div className="card muted center">Sign in to get your own packing list.<div style={{marginTop:10}}><button className="btn primary sm" onClick={auth.signIn}>Sign in with Google</button></div></div>
+      <ReadOnlyPack packing={template} title="Suggested items"/>
+    </div>);
+  }
+  if(!canEdit){
+    return (<div>
+      <div className="section-title"><h2>Packing</h2></div>
+      <div className="card muted small center">You're viewing this trip. Ask the owner to add <b>{user.email}</b> as an editor to track your own packing list.</div>
+      <ReadOnlyPack packing={template} title="Suggested items"/>
+    </div>);
+  }
+
+  const key=emailKey(user.email);
+  const mine=(trip.packingByUser&&trip.packingByUser[key])||null;
+  const packing=mine?(mine.packing||{}):template;
+  const checked=mine?(mine.checked||{}):{};
+  const name=firstNameFrom(user);
   const cats=Object.keys(packing);
   const all=Object.values(packing).flat(); const done=all.filter(x=>checked[x]).length;
-  const toggle=(item)=>update(t=>{t.checked=t.checked||{};t.checked[item]=!t.checked[item];return t;});
-  const addItem=(cat,val)=>update(t=>{t.packing=t.packing||{};(t.packing[cat]=t.packing[cat]||[]).push(val);return t;});
-  const delItem=(cat,idx)=>update(t=>{const v=t.packing[cat][idx];t.packing[cat].splice(idx,1);if(t.checked)delete t.checked[v];return t;});
-  const editItem=(cat,idx,val)=>update(t=>{const old=t.packing[cat][idx];t.packing[cat][idx]=val;if(t.checked&&t.checked[old]!==undefined){t.checked[val]=t.checked[old];delete t.checked[old];}return t;});
-  const addCat=()=>{const n=prompt("New category name:");if(n&&n.trim())update(t=>{t.packing=t.packing||{};if(!t.packing[n.trim()])t.packing[n.trim()]=[];return t;});};
+
+  const ensureMine=(t)=>{ t.packingByUser=t.packingByUser||{}; if(!t.packingByUser[key]) t.packingByUser[key]={name,email:user.email,packing:structuredClone(t.packing||{}),checked:{}}; return t.packingByUser[key]; };
+  const toggle=(item)=>update(t=>{const mm=ensureMine(t);mm.checked=mm.checked||{};mm.checked[item]=!mm.checked[item];return t;});
+  const addItem=(cat,val)=>update(t=>{const mm=ensureMine(t);(mm.packing[cat]=mm.packing[cat]||[]).push(val);return t;});
+  const delItem=(cat,idx)=>update(t=>{const mm=ensureMine(t);const v=mm.packing[cat][idx];mm.packing[cat].splice(idx,1);if(mm.checked)delete mm.checked[v];return t;});
+  const editItem=(cat,idx,val)=>update(t=>{const mm=ensureMine(t);const old=mm.packing[cat][idx];mm.packing[cat][idx]=val;if(mm.checked&&mm.checked[old]!==undefined){mm.checked[val]=mm.checked[old];delete mm.checked[old];}return t;});
+  const addCat=()=>{const n=prompt("New category name:");if(n&&n.trim())update(t=>{const mm=ensureMine(t);if(!mm.packing[n.trim()])mm.packing[n.trim()]=[];return t;});};
+
   return (
     <div>
-      <div className="section-title"><h2>Packing</h2><span className="chip">{done}/{all.length} packed</span></div>
+      <div className="section-title"><h2>{name}'s Packing List</h2><span className="chip">{done}/{all.length} packed</span></div>
+      {!mine && <div className="muted small" style={{margin:"2px 0 6px"}}>Starts from the trip's suggested items. Your changes here are only yours.</div>}
       {all.length>0 && <div className="prog"><i style={{width:(all.length?done/all.length*100:0)+"%"}}/></div>}
       {cats.map(cat=>(
         <div className="card" key={cat}>
@@ -1189,7 +1292,7 @@ function Packing({trip,update}){
           <AddLine placeholder={`Add to ${cat}`} onAdd={v=>addItem(cat,v)}/>
         </div>
       ))}
-      {cats.length===0 && <div className="card muted center">No packing categories yet.</div>}
+      {cats.length===0 && <div className="card muted center">No items yet. Add a category to start.</div>}
       <button className="btn ghost sm" onClick={addCat}>+ Add category</button>
     </div>
   );
@@ -1201,10 +1304,11 @@ function AddLine({placeholder,onAdd}){
 
 /* ============ QUESTS ============ */
 function Quests({trip,update}){
+  const canEdit=React.useContext(CanEdit);
   const quests=trip.quests||[];
   const getText=(q)=>q.text||q.name||""; const getCat=(q)=>q.category||q.cat||"activity";
   const done=quests.filter(q=>q.done).length;
-  const toggle=(i)=>update(t=>{t.quests[i].done=!t.quests[i].done;return t;});
+  const toggle=(i)=>{ if(!canEdit) return; update(t=>{t.quests[i].done=!t.quests[i].done;return t;}); };
   const add=(text)=>update(t=>{(t.quests=t.quests||[]).push({id:uid("q"),text,category:"activity",done:false,city:"any"});return t;});
   const del=(i)=>update(t=>{t.quests.splice(i,1);return t;});
   const cycleCat=(i)=>update(t=>{const q=t.quests[i];const key=q.category!==undefined?"category":(q.cat!==undefined?"cat":"category");const v=q[key]||"activity";q[key]=CAT_ORDER[(CAT_ORDER.indexOf(v)+1)%CAT_ORDER.length];return t;});
@@ -1220,25 +1324,26 @@ function Quests({trip,update}){
           {items.map(({q,i})=>{ const cat=getCat(q); const meta=CATS[cat]||{c:"var(--muted2)",label:cat};
             return (
             <div className={"quest "+(q.done?"done":"")} key={q.id||i}>
-              <div className={"checkbox "+(q.done?"on":"")} onClick={()=>toggle(i)}>{q.done?"✓":""}</div>
+              <div className={"checkbox "+(q.done?"on":"")} onClick={()=>toggle(i)} style={{cursor:canEdit?"pointer":"default"}}>{q.done?"✓":""}</div>
               <div style={{flex:1,minWidth:0}}>
                 <div className="qt"><Editable value={getText(q)} onChange={v=>editText(i,v)}/></div>
                 {q.notes && <div className="qsub">{q.notes}</div>}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span className="qbadge" style={{background:meta.c,cursor:"pointer"}} onClick={()=>cycleCat(i)} title="Change category">{meta.label}</span>
-                <button className="icon-btn" onClick={()=>del(i)}>✕</button>
+                <span className="qbadge" style={{background:meta.c,cursor:canEdit?"pointer":"default"}} onClick={canEdit?()=>cycleCat(i):undefined} title={canEdit?"Change category":""}>{meta.label}</span>
+                {canEdit && <button className="icon-btn" onClick={()=>del(i)}>✕</button>}
               </div>
             </div>); })}
         </div>
       ))}
-      <div className="card"><AddLine placeholder="Add a quest…" onAdd={add}/></div>
+      {canEdit && <div className="card"><AddLine placeholder="Add a quest…" onAdd={add}/></div>}
     </div>
   );
 }
 
 /* ============ INFO ============ */
 function Info({trip,update}){
+  const canEdit=React.useContext(CanEdit);
   const info=trip.info;
   const hotelDistances=useMemo(()=>{ const hc=trip.hotelCoords||{},cc=trip.cityCoords||{};
     return Object.entries(hc).map(([city,h])=>({city,name:h.name,km:cc[city]?haversine(h,cc[city]):null})).filter(x=>x.name); },[trip.hotelCoords,trip.cityCoords]);
@@ -1247,7 +1352,7 @@ function Info({trip,update}){
   const addSection=()=>update(t=>{ if(!Array.isArray(t.info)) t.info=[]; t.info.push({title:"New section",content:""}); return t; });
   return (
     <div>
-      <div className="section-title"><h2>Info & Tips</h2>{(isArr||!hasStruct)&&<button className="btn sm" onClick={addSection}>+ Add section</button>}</div>
+      <div className="section-title"><h2>Info & Tips</h2>{canEdit&&(isArr||!hasStruct)&&<button className="btn sm" onClick={addSection}>+ Add section</button>}</div>
 
       {hotelDistances.length>0 && <div className="card info-block"><h3>🏨 Where you're staying</h3>
         <ul className="info-list">{hotelDistances.map(h=><li key={h.city}><b>{h.name}</b> <span className="muted" style={{textTransform:"capitalize"}}>({h.city})</span>{h.km!=null && <span className="muted"> · ~{h.km} km from center</span>}</li>)}</ul></div>}
@@ -1256,7 +1361,7 @@ function Info({trip,update}){
         <div className="card info-block" key={i}>
           <div style={{display:"flex",justifyContent:"space-between",gap:10}}>
             <h3><Editable value={sec.title} onChange={v=>update(t=>{t.info[i].title=v;return t;})} placeholder="Section title"/></h3>
-            <button className="icon-btn" onClick={()=>update(t=>{t.info.splice(i,1);return t;})}>🗑</button>
+            {canEdit && <button className="icon-btn" onClick={()=>update(t=>{t.info.splice(i,1);return t;})}>🗑</button>}
           </div>
           <div className="info-content"><Editable value={sec.content} onChange={v=>update(t=>{t.info[i].content=v;return t;})} placeholder="Details…" multiline/></div>
         </div>
@@ -1266,7 +1371,7 @@ function Info({trip,update}){
 
       {trip.bookings && trip.bookings.length>0 && <div className="card info-block"><h3>📋 Bookings tracker</h3>
         {trip.bookings.map((b,i)=>(<div className="checkline" key={b.id||i}>
-          <div className={"checkbox "+(b.status==="booked"?"on":"")} onClick={()=>update(t=>{t.bookings[i].status=t.bookings[i].status==="booked"?"not_booked":"booked";return t;})}>{b.status==="booked"?"✓":""}</div>
+          <div className={"checkbox "+(b.status==="booked"?"on":"")} onClick={()=>{ if(!canEdit) return; update(t=>{t.bookings[i].status=t.bookings[i].status==="booked"?"not_booked":"booked";return t;}); }} style={{cursor:canEdit?"pointer":"default"}}>{b.status==="booked"?"✓":""}</div>
           <span className="ct"><b>{b.vendor}</b> <span className="muted small">· {b.cost}</span>{b.notes && <div className="muted small">{b.notes}</div>}</span></div>))}</div>}
 
       {trip.budget_estimate?.per_person_cad && <div className="card info-block"><h3>🧮 Budget (per person)</h3>

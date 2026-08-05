@@ -1,0 +1,30 @@
+rules_version = '2';
+
+// Travel app access model:
+//  - Anyone with a trip link can VIEW that trip (public get by slug)
+//  - Only the owner can browse the full list of trips (the private homepage)
+//  - Only the owner can create or delete trips
+//  - The owner, or an email on a trip's `editors` list, can edit that trip
+//  - Everything else is denied by default
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function isOwner() {
+      return signedIn() && request.auth.token.email.lower() == 'eyan.howlader@gmail.com';
+    }
+    function isEditor(data) {
+      return signedIn() && data.get('editors', []).hasAny([request.auth.token.email.lower()]);
+    }
+
+    match /trips/{slug} {
+      allow get:            if true;                             // view a specific trip via its link
+      allow list:           if isOwner();                        // only the owner sees the homepage list
+      allow create, delete: if isOwner();                        // only the owner adds/removes trips
+      allow update:         if isOwner() || isEditor(resource.data);  // owner or invited editor can edit
+    }
+  }
+}
