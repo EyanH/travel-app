@@ -786,7 +786,14 @@ const DEFAULT_HERO={
   iceland:"https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=1600&q=80",
   greece:"https://images.unsplash.com/photo-1533105079780-92b9be482077?w=1600&q=80",
   mexico:"https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1600&q=80",
-  uk:"https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1600&q=80"
+  uk:"https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1600&q=80",
+  indonesia:"https://images.unsplash.com/photo-1604999565976-8913ad2ddb7c?w=1600&q=80",
+  india:"https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1600&q=80",
+  egypt:"https://images.unsplash.com/photo-1503177119275-0aa32b3a9368?w=1600&q=80",
+  turkey:"https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?w=1600&q=80",
+  vietnam:"https://images.unsplash.com/photo-1528127269322-539801943592?w=1600&q=80",
+  netherlands:"https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?w=1600&q=80",
+  australia:"https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=1600&q=80"
 };
 function detectCountry(trip){
   if(trip.country) return trip.country;
@@ -899,8 +906,8 @@ const COUNTRY_CURRENCY={
   portugal:["EUR","Euro"],germany:["EUR","Euro"],greece:["EUR","Euro"],netherlands:["EUR","Euro"],
   ireland:["EUR","Euro"],croatia:["EUR","Euro"],"czech republic":["CZK","Czech Koruna"]
 };
-const COUNTRY_LANG={morocco:"arabic",peru:"spanish",mexico:"spanish",spain:"spanish",argentina:"spanish",colombia:"spanish",chile:"spanish",japan:"japanese",france:"french",italy:"italian",portugal:"portuguese",brazil:"portuguese",germany:"german",greece:"greek",netherlands:"dutch",thailand:"thai",vietnam:"vietnamese",turkey:"turkish",egypt:"arabic",canada:"english",usa:"english","united states":"english",uk:"english","united kingdom":"english",australia:"english","new zealand":"english",ireland:"english",india:"hindi",iceland:"icelandic"};
-const LANG_NAME={arabic:"Arabic",spanish:"Spanish",japanese:"Japanese",french:"French",italian:"Italian",portuguese:"Portuguese",german:"German",greek:"Greek",dutch:"Dutch",thai:"Thai",vietnamese:"Vietnamese",turkish:"Turkish",english:"English",hindi:"Hindi",icelandic:"Icelandic"};
+const COUNTRY_LANG={morocco:"arabic",peru:"spanish",mexico:"spanish",spain:"spanish",argentina:"spanish",colombia:"spanish",chile:"spanish",japan:"japanese",france:"french",italy:"italian",portugal:"portuguese",brazil:"portuguese",germany:"german",greece:"greek",netherlands:"dutch",thailand:"thai",vietnam:"vietnamese",indonesia:"indonesian",turkey:"turkish",egypt:"arabic",canada:"english",usa:"english","united states":"english",uk:"english","united kingdom":"english",australia:"english","new zealand":"english",ireland:"english",india:"hindi",iceland:"icelandic"};
+const LANG_NAME={arabic:"Arabic",spanish:"Spanish",japanese:"Japanese",french:"French",italian:"Italian",portuguese:"Portuguese",german:"German",greek:"Greek",dutch:"Dutch",thai:"Thai",vietnamese:"Vietnamese",indonesian:"Indonesian (Bahasa Indonesia)",turkish:"Turkish",english:"English",hindi:"Hindi",icelandic:"Icelandic"};
 const PHRASEBOOK={
   french:["Hello - Bonjour","Thank you - Merci","Please - S'il vous plaît","Yes / No - Oui / Non","Excuse me - Excusez-moi","How much? - C'est combien ?","Where is...? - Où est... ?","I don't understand - Je ne comprends pas","Do you speak English? - Parlez-vous anglais ?","Goodbye - Au revoir"],
   spanish:["Hello - Hola","Thank you - Gracias","Please - Por favor","Yes / No - Sí / No","Excuse me - Perdón","How much? - ¿Cuánto cuesta?","Where is...? - ¿Dónde está...?","I don't understand - No entiendo","Do you speak English? - ¿Habla inglés?","Goodbye - Adiós"],
@@ -913,7 +920,9 @@ const PHRASEBOOK={
   dutch:["Hello - Hallo / Goedendag","Thank you - Dank je","Please - Alstublieft","Yes / No - Ja / Nee","Excuse me - Pardon","How much? - Hoeveel kost het?","Where is...? - Waar is...?","I don't understand - Ik begrijp het niet","Do you speak English? - Spreekt u Engels?","Goodbye - Tot ziens"],
   thai:["Hello - Sawasdee (khrap/kha)","Thank you - Khop khun","Please - Karuna","Yes / No - Chai / Mai chai","Excuse me - Kho thot","How much? - Tao rai?","Where is...? - ... yu thi nai?","I don't understand - Mai khao jai","Do you speak English? - Phut phasa angkrit dai mai?","Goodbye - La kon"],
   turkish:["Hello - Merhaba","Thank you - Teşekkürler","Please - Lütfen","Yes / No - Evet / Hayır","Excuse me - Affedersiniz","How much? - Ne kadar?","Where is...? - ... nerede?","I don't understand - Anlamıyorum","Do you speak English? - İngilizce biliyor musunuz?","Goodbye - Hoşça kal"],
-  vietnamese:["Hello - Xin chào","Thank you - Cảm ơn","Please - Làm ơn","Yes / No - Vâng / Không","Excuse me - Xin lỗi","How much? - Bao nhiêu tiền?","Where is...? - ... ở đâu?","I don't understand - Tôi không hiểu","Do you speak English? - Bạn có nói tiếng Anh không?","Goodbye - Tạm biệt"]
+  vietnamese:["Hello - Xin chào","Thank you - Cảm ơn","Please - Làm ơn","Yes / No - Vâng / Không","Excuse me - Xin lỗi","How much? - Bao nhiêu tiền?","Where is...? - ... ở đâu?","I don't understand - Tôi không hiểu","Do you speak English? - Bạn có nói tiếng Anh không?","Goodbye - Tạm biệt"],
+  indonesian:["Hello - Halo / Selamat pagi (morning)","Thank you - Terima kasih","Please - Tolong","Yes / No - Ya / Tidak","Excuse me - Permisi","How much? - Berapa harganya?","Where is...? - Di mana...?","I don't understand - Saya tidak mengerti","Do you speak English? - Apakah Anda bisa bahasa Inggris?","Goodbye - Sampai jumpa"],
+  hindi:["Hello - Namaste","Thank you - Dhanyavaad / Shukriya","Please - Kripya","Yes / No - Haan / Nahin","Excuse me - Maaf kijiye","How much? - Kitne ka hai?","Where is...? - ... kahan hai?","I don't understand - Mujhe samajh nahin aaya","Do you speak English? - Kya aap angrezi bolte hain?","Goodbye - Alvida / Phir milenge"]
 };
 async function geocodePlace(name, country){
   try{
@@ -927,7 +936,8 @@ async function geocodePlace(name, country){
 }
 function derivePlaces(trip){
   const sub=(trip.meta&&trip.meta.subtitle)||"";
-  const toks=sub.split(/→|->|,|\/|;|·/).map(s=>s.trim()).filter(Boolean).filter(s=>s.length>2 && !/^(home|return|travel|trip|and|the)$/i.test(s));
+  const toks=sub.split(/→|->|,|\/|;|·|&|\+/).map(s=>s.replace(/[?]/g,"").trim())
+    .filter(s=>s.length>2 && /[a-z]/i.test(s) && !/^(home|return|travel|trip|and|the|tbd|etc)$/i.test(s));
   return [...new Set(toks)].slice(0,6);
 }
 async function seasonalWeather(coord, startISO, endISO){
@@ -968,29 +978,28 @@ function languageSection(country){
 async function enrichTrip(slug, country){
   try{
     const trip=store.loadTrip(slug); if(!trip) return false;
+    // leave legacy structured info (object) alone
+    if(trip.info && !Array.isArray(trip.info) && typeof trip.info==="object" && Object.keys(trip.info).length) return false;
     country=country||trip.country||detectCountry(trip);
-    const needCoords=!trip.cityCoords||Object.keys(trip.cityCoords).length===0;
-    const needInfo=!trip.info||(Array.isArray(trip.info)&&trip.info.length===0);
-    if(!needCoords&&!needInfo) return false;
-    const coords={};
-    if(needCoords){
+    // geocode only if we don't have coords yet
+    const coords=Object.assign({}, trip.cityCoords||{});
+    const hadCoords=Object.keys(coords).length>0;
+    if(!hadCoords){
       for(const p of derivePlaces(trip)){ const c=await geocodePlace(p,country); if(c&&c.inCountry) coords[p.toLowerCase()]={lat:c.lat,lon:c.lon}; }
       if(Object.keys(coords).length===0){ const c=await geocodePlace(country,country)||await geocodePlace(country,""); if(c) coords[(country||"trip").toLowerCase()]={lat:c.lat,lon:c.lon}; }
     }
-    let info=null;
-    if(needInfo){
-      const secs=[];
-      const first=needCoords?Object.values(coords)[0]:(trip.cityCoords&&Object.values(trip.cityCoords)[0]);
-      if(first&&trip.meta&&trip.meta.startDate){ const w=await seasonalWeather(first,trip.meta.startDate,trip.meta.endDate); if(w) secs.push(w); }
-      const cur=await currencySection(country); if(cur) secs.push(cur);
-      const lang=languageSection(country); if(lang) secs.push(lang);
-      if(secs.length) info=secs;
-    }
+    // gap-fill info: add only the section types that aren't present yet
+    const info=Array.isArray(trip.info)?trip.info.slice():[];
+    const has=(emoji)=>info.some(s=>String((s&&s.title)||"").trim().startsWith(emoji));
+    let changed=false;
+    const first=Object.values(coords)[0];
+    if(!has("🌡")&&first&&trip.meta&&trip.meta.startDate){ const w=await seasonalWeather(first,trip.meta.startDate,trip.meta.endDate); if(w){info.push(w);changed=true;} }
+    if(!has("💱")){ const cur=await currencySection(country); if(cur){info.push(cur);changed=true;} }
+    if(!has("🗣")){ const lang=languageSection(country); if(lang){info.push(lang);changed=true;} }
     const fresh=store.loadTrip(slug)||trip; const merged=Object.assign({},fresh);
-    if(needCoords&&Object.keys(coords).length) merged.cityCoords=Object.assign({},fresh.cityCoords||{},coords);
-    if(needInfo&&info) merged.info=info;
-    store.saveTrip(slug,merged);
-    return true;
+    if(!hadCoords&&Object.keys(coords).length){ merged.cityCoords=coords; changed=true; }
+    if(changed){ merged.info=info; store.saveTrip(slug,merged); }
+    return changed;
   }catch(e){ console.warn("enrichTrip failed",e); return false; }
 }
 
@@ -1227,7 +1236,8 @@ function TripDetail({slug,go,auth}){
 }
 function SettingsMenu({trip,country,update,onDelete,close}){
   const [busy,setBusy]=useState(false);
-  const canAutofill=(!trip.info||(Array.isArray(trip.info)&&trip.info.length===0))||(!trip.cityCoords||Object.keys(trip.cityCoords).length===0);
+  const structuredInfo=trip.info && !Array.isArray(trip.info) && typeof trip.info==="object" && Object.keys(trip.info).length>0;
+  const canAutofill=!structuredInfo;
   useEffect(()=>{ const h=(e)=>{ if(!e.target.closest(".pop")&&!e.target.closest(".btn")) close(); };
     setTimeout(()=>document.addEventListener("click",h),0); return()=>document.removeEventListener("click",h); },[close]);
   return (
