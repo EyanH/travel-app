@@ -883,6 +883,117 @@ function weekdayShort(dateStr){ const m={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul
   const mo=m[(c[0]||"").slice(0,3).toLowerCase()], day=parseInt(c[1]); if(mo==null||isNaN(day)) return {w:"",n:dateStr};
   const d=new Date(2026,mo,day); return {w:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()], n:String(day)}; }
 
+/* ============ AUTO-FILL TRAVEL INFO (free: Open-Meteo geocoding+archive, open.er-api FX) ============ */
+const MONTHS_LONG=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const COUNTRY_CURRENCY={
+  morocco:["MAD","Moroccan Dirham"],peru:["PEN","Peruvian Sol"],canada:["CAD","Canadian Dollar"],
+  japan:["JPY","Japanese Yen"],usa:["USD","US Dollar"],"united states":["USD","US Dollar"],
+  uk:["GBP","British Pound"],"united kingdom":["GBP","British Pound"],mexico:["MXN","Mexican Peso"],
+  thailand:["THB","Thai Baht"],vietnam:["VND","Vietnamese Dong"],indonesia:["IDR","Indonesian Rupiah"],
+  india:["INR","Indian Rupee"],turkey:["TRY","Turkish Lira"],egypt:["EGP","Egyptian Pound"],
+  brazil:["BRL","Brazilian Real"],argentina:["ARS","Argentine Peso"],iceland:["ISK","Icelandic Krona"],
+  norway:["NOK","Norwegian Krone"],colombia:["COP","Colombian Peso"],chile:["CLP","Chilean Peso"],
+  "south africa":["ZAR","South African Rand"],kenya:["KES","Kenyan Shilling"],jordan:["JOD","Jordanian Dinar"],
+  uae:["AED","UAE Dirham"],"united arab emirates":["AED","UAE Dirham"],australia:["AUD","Australian Dollar"],
+  "new zealand":["NZD","NZ Dollar"],france:["EUR","Euro"],spain:["EUR","Euro"],italy:["EUR","Euro"],
+  portugal:["EUR","Euro"],germany:["EUR","Euro"],greece:["EUR","Euro"],netherlands:["EUR","Euro"],
+  ireland:["EUR","Euro"],croatia:["EUR","Euro"],"czech republic":["CZK","Czech Koruna"]
+};
+const COUNTRY_LANG={morocco:"arabic",peru:"spanish",mexico:"spanish",spain:"spanish",argentina:"spanish",colombia:"spanish",chile:"spanish",japan:"japanese",france:"french",italy:"italian",portugal:"portuguese",brazil:"portuguese",germany:"german",greece:"greek",netherlands:"dutch",thailand:"thai",vietnam:"vietnamese",turkey:"turkish",egypt:"arabic",canada:"english",usa:"english","united states":"english",uk:"english","united kingdom":"english",australia:"english","new zealand":"english",ireland:"english",india:"hindi",iceland:"icelandic"};
+const LANG_NAME={arabic:"Arabic",spanish:"Spanish",japanese:"Japanese",french:"French",italian:"Italian",portuguese:"Portuguese",german:"German",greek:"Greek",dutch:"Dutch",thai:"Thai",vietnamese:"Vietnamese",turkish:"Turkish",english:"English",hindi:"Hindi",icelandic:"Icelandic"};
+const PHRASEBOOK={
+  french:["Hello - Bonjour","Thank you - Merci","Please - S'il vous plaît","Yes / No - Oui / Non","Excuse me - Excusez-moi","How much? - C'est combien ?","Where is...? - Où est... ?","I don't understand - Je ne comprends pas","Do you speak English? - Parlez-vous anglais ?","Goodbye - Au revoir"],
+  spanish:["Hello - Hola","Thank you - Gracias","Please - Por favor","Yes / No - Sí / No","Excuse me - Perdón","How much? - ¿Cuánto cuesta?","Where is...? - ¿Dónde está...?","I don't understand - No entiendo","Do you speak English? - ¿Habla inglés?","Goodbye - Adiós"],
+  italian:["Hello - Ciao / Buongiorno","Thank you - Grazie","Please - Per favore","Yes / No - Sì / No","Excuse me - Mi scusi","How much? - Quanto costa?","Where is...? - Dov'è...?","I don't understand - Non capisco","Do you speak English? - Parla inglese?","Goodbye - Arrivederci"],
+  portuguese:["Hello - Olá","Thank you - Obrigado / Obrigada","Please - Por favor","Yes / No - Sim / Não","Excuse me - Com licença","How much? - Quanto custa?","Where is...? - Onde fica...?","I don't understand - Não entendo","Do you speak English? - Fala inglês?","Goodbye - Adeus / Tchau"],
+  german:["Hello - Hallo / Guten Tag","Thank you - Danke","Please - Bitte","Yes / No - Ja / Nein","Excuse me - Entschuldigung","How much? - Wie viel kostet das?","Where is...? - Wo ist...?","I don't understand - Ich verstehe nicht","Do you speak English? - Sprechen Sie Englisch?","Goodbye - Auf Wiedersehen"],
+  japanese:["Hello - Konnichiwa","Thank you - Arigatou gozaimasu","Please - Onegai shimasu","Yes / No - Hai / Iie","Excuse me / Sorry - Sumimasen","How much? - Ikura desu ka?","Where is...? - ... wa doko desu ka?","I don't understand - Wakarimasen","Do you speak English? - Eigo o hanasemasu ka?","Goodbye - Sayounara"],
+  arabic:["Hello - Salam / As-salamu alaykum","Thank you - Shukran","Please - Min fadlak","Yes / No - Na'am / La","Excuse me - Smahli (Afwan)","How much? - Bshhal? (Bikam?)","Where is...? - Fin...? (Ayna...?)","I don't understand - Mafhemtsh (La afham)","Do you speak English? - Wach kathder ngliziya?","Goodbye - Bslama (Ma'a salama)"],
+  greek:["Hello - Yia sou / Yassas","Thank you - Efharisto","Please - Parakalo","Yes / No - Ne / Ohi","Excuse me - Signomi","How much? - Poso kani?","Where is...? - Pou ine...?","I don't understand - Den katalaveno","Do you speak English? - Milate anglika?","Goodbye - Andio"],
+  dutch:["Hello - Hallo / Goedendag","Thank you - Dank je","Please - Alstublieft","Yes / No - Ja / Nee","Excuse me - Pardon","How much? - Hoeveel kost het?","Where is...? - Waar is...?","I don't understand - Ik begrijp het niet","Do you speak English? - Spreekt u Engels?","Goodbye - Tot ziens"],
+  thai:["Hello - Sawasdee (khrap/kha)","Thank you - Khop khun","Please - Karuna","Yes / No - Chai / Mai chai","Excuse me - Kho thot","How much? - Tao rai?","Where is...? - ... yu thi nai?","I don't understand - Mai khao jai","Do you speak English? - Phut phasa angkrit dai mai?","Goodbye - La kon"],
+  turkish:["Hello - Merhaba","Thank you - Teşekkürler","Please - Lütfen","Yes / No - Evet / Hayır","Excuse me - Affedersiniz","How much? - Ne kadar?","Where is...? - ... nerede?","I don't understand - Anlamıyorum","Do you speak English? - İngilizce biliyor musunuz?","Goodbye - Hoşça kal"],
+  vietnamese:["Hello - Xin chào","Thank you - Cảm ơn","Please - Làm ơn","Yes / No - Vâng / Không","Excuse me - Xin lỗi","How much? - Bao nhiêu tiền?","Where is...? - ... ở đâu?","I don't understand - Tôi không hiểu","Do you speak English? - Bạn có nói tiếng Anh không?","Goodbye - Tạm biệt"]
+};
+async function geocodePlace(name, country){
+  try{
+    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=en&format=json`);
+    const j=await r.json(); const res=j.results||[]; if(!res.length) return null;
+    const c=(country||"").toLowerCase();
+    const match=res.find(x=>c && (String(x.country||"").toLowerCase().includes(c) || c.includes(String(x.country||"").toLowerCase())));
+    const pick=match||res[0];
+    return {lat:pick.latitude, lon:pick.longitude, name:pick.name, inCountry:!!match};
+  }catch{ return null; }
+}
+function derivePlaces(trip){
+  const sub=(trip.meta&&trip.meta.subtitle)||"";
+  const toks=sub.split(/→|->|,|\/|;|·/).map(s=>s.trim()).filter(Boolean).filter(s=>s.length>2 && !/^(home|return|travel|trip|and|the)$/i.test(s));
+  return [...new Set(toks)].slice(0,6);
+}
+async function seasonalWeather(coord, startISO, endISO){
+  try{
+    const s=new Date(startISO+"T00:00:00"); if(isNaN(s)) return null;
+    const e=endISO?new Date(endISO+"T00:00:00"):s; const y=s.getFullYear()-1; const pad=n=>String(n).padStart(2,"0");
+    const sd=`${y}-${pad(s.getMonth()+1)}-${pad(s.getDate())}`, ed=`${y}-${pad(e.getMonth()+1)}-${pad(e.getDate())}`;
+    const r=await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${coord.lat}&longitude=${coord.lon}&start_date=${sd}&end_date=${ed}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`);
+    const j=await r.json(); const d=j.daily; if(!d||!d.temperature_2m_max||!d.temperature_2m_max.length) return null;
+    const avg=a=>a.filter(x=>x!=null).reduce((x,y)=>x+y,0)/a.filter(x=>x!=null).length;
+    const hi=Math.round(avg(d.temperature_2m_max)), lo=Math.round(avg(d.temperature_2m_min));
+    const rain=d.precipitation_sum?Math.round(avg(d.precipitation_sum)*10)/10:null;
+    const mo=MONTHS_LONG[s.getMonth()];
+    let pack;
+    if(hi>=30) pack="Pack for heat: light breathable clothing, a sun hat, high-SPF sunscreen, and a refillable water bottle.";
+    else if(hi>=22) pack="Pack light layers, sunglasses, and a light jacket for evenings.";
+    else if(hi>=12) pack="Pack layers and a warm jacket; evenings can be cool.";
+    else pack="Pack warm: an insulated jacket, hat, gloves, and thermal base layers.";
+    let extra = lo<=5 ? ` Nights get cold (~${lo}°C), bring an extra warm layer.` : "";
+    let rline = (rain!=null && rain>=3) ? `\nRain is fairly likely (~${rain}mm/day on average), pack a compact rain shell.` : "";
+    return {title:"🌡 Weather to expect", content:`Based on ${mo} averages: highs around ${hi}°C, lows around ${lo}°C.${rline}\n\n${pack}${extra}`};
+  }catch{ return null; }
+}
+async function currencySection(country){
+  const cc=COUNTRY_CURRENCY[(country||"").trim().toLowerCase()]; if(!cc) return null;
+  const [code,name]=cc; let rateLine="";
+  try{ if(code!=="CAD"){ const j=await (await fetch("https://open.er-api.com/v6/latest/CAD")).json();
+    const rate=j&&j.rates&&j.rates[code]; if(rate) rateLine=`\nApprox. ${Math.round(rate*100)/100} ${code} = 1 CAD (rates change daily).`; } }catch{}
+  return {title:"💱 Currency", content:`${name} (${code}).${rateLine}\n\nPay in the local currency rather than your home currency to avoid inflated "dynamic conversion" fees. Use bank ATMs over airport exchange counters for the best rate.`};
+}
+function languageSection(country){
+  const langKey=COUNTRY_LANG[(country||"").trim().toLowerCase()]; if(!langKey) return null;
+  const name=LANG_NAME[langKey]||langKey; const phrases=PHRASEBOOK[langKey];
+  const head=`Primary language: ${name}. English is usually understood in tourist areas.`;
+  if(!phrases) return {title:"🗣 Language", content:head};
+  return {title:"🗣 Language & useful phrases", content:head+"\n\n"+phrases.join("\n")};
+}
+async function enrichTrip(slug, country){
+  try{
+    const trip=store.loadTrip(slug); if(!trip) return false;
+    country=country||trip.country||detectCountry(trip);
+    const needCoords=!trip.cityCoords||Object.keys(trip.cityCoords).length===0;
+    const needInfo=!trip.info||(Array.isArray(trip.info)&&trip.info.length===0);
+    if(!needCoords&&!needInfo) return false;
+    const coords={};
+    if(needCoords){
+      for(const p of derivePlaces(trip)){ const c=await geocodePlace(p,country); if(c&&c.inCountry) coords[p.toLowerCase()]={lat:c.lat,lon:c.lon}; }
+      if(Object.keys(coords).length===0){ const c=await geocodePlace(country,country)||await geocodePlace(country,""); if(c) coords[(country||"trip").toLowerCase()]={lat:c.lat,lon:c.lon}; }
+    }
+    let info=null;
+    if(needInfo){
+      const secs=[];
+      const first=needCoords?Object.values(coords)[0]:(trip.cityCoords&&Object.values(trip.cityCoords)[0]);
+      if(first&&trip.meta&&trip.meta.startDate){ const w=await seasonalWeather(first,trip.meta.startDate,trip.meta.endDate); if(w) secs.push(w); }
+      const cur=await currencySection(country); if(cur) secs.push(cur);
+      const lang=languageSection(country); if(lang) secs.push(lang);
+      if(secs.length) info=secs;
+    }
+    const fresh=store.loadTrip(slug)||trip; const merged=Object.assign({},fresh);
+    if(needCoords&&Object.keys(coords).length) merged.cityCoords=Object.assign({},fresh.cityCoords||{},coords);
+    if(needInfo&&info) merged.info=info;
+    store.saveTrip(slug,merged);
+    return true;
+  }catch(e){ console.warn("enrichTrip failed",e); return false; }
+}
+
 /* ============ EDITABLE ============ */
 function Editable({value,onChange,placeholder="",className="",multiline=false,tag="span"}){
   const canEdit=React.useContext(CanEdit);
@@ -1024,6 +1135,7 @@ function NewTripModal({onClose,onCreated}){
     store.saveTrip(slug,{slug,country:f.country.trim(),archived:false,createdAt:Date.now(),heroImage:f.hero.trim(),
       meta:{tripName:f.name.trim(),subtitle:f.subtitle.trim(),startDate:f.start,endDate:f.end,stats:[]},
       days:[],flights:[],flnotes:"",packing:{Clothing:[],Tech:[],"Docs & Money":[],Misc:[]},checked:{},quests:[],hotelCoords:{},cityCoords:{},info:[]});
+    enrichTrip(slug, f.country.trim());
     onCreated(slug);
   };
   return (
@@ -1114,6 +1226,8 @@ function TripDetail({slug,go,auth}){
   );
 }
 function SettingsMenu({trip,country,update,onDelete,close}){
+  const [busy,setBusy]=useState(false);
+  const canAutofill=(!trip.info||(Array.isArray(trip.info)&&trip.info.length===0))||(!trip.cityCoords||Object.keys(trip.cityCoords).length===0);
   useEffect(()=>{ const h=(e)=>{ if(!e.target.closest(".pop")&&!e.target.closest(".btn")) close(); };
     setTimeout(()=>document.addEventListener("click",h),0); return()=>document.removeEventListener("click",h); },[close]);
   return (
@@ -1122,6 +1236,10 @@ function SettingsMenu({trip,country,update,onDelete,close}){
         <input defaultValue={trip.heroImage||""} placeholder={heroFor(trip,country)?"(using a default)":"https://..."} onBlur={e=>update(t=>{t.heroImage=e.target.value.trim();return t;})}/></div>
       <div className="field" style={{marginBottom:11}}><label>Country</label>
         <input defaultValue={trip.country||country||""} placeholder="Country" onBlur={e=>update(t=>{t.country=e.target.value.trim();return t;})}/></div>
+      {canAutofill && <><button className="btn ghost sm" style={{width:"100%",marginBottom:5}} disabled={busy}
+        onClick={async()=>{ setBusy(true); const ok=await enrichTrip(trip.slug, trip.country||country); setBusy(false); if(ok) close(); }}>
+        {busy?"Fetching travel info…":"✨ Auto-fill travel info"}</button>
+        <div className="muted" style={{fontSize:11,marginBottom:11}}>Adds weather, currency & phrases from the destination and dates.</div></>}
       <div className="field" style={{marginBottom:11}}><label>Who can edit</label>
         {(trip.editors||[]).length===0 && <div className="muted" style={{fontSize:11.5,marginBottom:4}}>Only you can edit right now.</div>}
         {(trip.editors||[]).map((e,i)=>(<div className="editor-row" key={i}><span style={{wordBreak:"break-all"}}>{e}</span><button className="icon-btn" onClick={()=>update(t=>{t.editors.splice(i,1);return t;})}>✕</button></div>))}
