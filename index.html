@@ -886,14 +886,24 @@ function Editable({value,onChange,placeholder="",className="",multiline=false,ta
 
 /* ============ APP ============ */
 function Landing({auth}){
+  const u=auth.user;
   return (
     <div className="wrap">
-      <div className="topbar"><div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div></div>
+      <div className="topbar"><div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div>{u && <AccountChip auth={auth}/>}</div>
       <div className="landing">
         <div style={{fontSize:46,marginBottom:8}}>🧭</div>
         <h1>A private travel planner</h1>
-        <p>This homepage is private to the owner. If someone shared a specific trip with you, open that link directly. If you're the owner, sign in.</p>
-        <button className="btn primary" onClick={auth.signIn}>Sign in with Google</button>
+        {u ? (
+          <>
+            <p>You're signed in as <b>{u.email}</b>, but this homepage is private to the owner. If a trip was shared with you, open that trip's link directly, you'll be able to edit any trip you've been invited to.</p>
+            <button className="btn" onClick={auth.signOut}>Sign out</button>
+          </>
+        ) : (
+          <>
+            <p>This homepage is private to the owner. If someone shared a specific trip with you, open that link directly. If you're the owner, sign in.</p>
+            <button className="btn primary" onClick={auth.signIn}>Sign in with Google</button>
+          </>
+        )}
       </div>
     </div>
   );
