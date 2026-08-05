@@ -134,9 +134,10 @@
   @media(max-width:560px){.hero .htext h1{font-size:31px}}
   .hero .htext .sub{color:#e6ebf1;font-size:14.5px;text-shadow:0 1px 10px rgba(0,0,0,.8);font-weight:500}
 
-  .statrow{display:flex;gap:30px;flex-wrap:wrap;padding:20px 0 2px}
-  .statrow .s b{font-family:'Playfair Display',serif;font-size:26px}
-  .statrow .s span{color:var(--muted);font-size:11.5px;margin-left:7px;text-transform:uppercase;letter-spacing:.7px}
+  .statrow{display:flex;gap:12px;flex-wrap:wrap;padding:20px 0 2px}
+  .statrow .s{display:flex;flex-direction:column;gap:3px;background:linear-gradient(180deg,var(--card),var(--elev));border:1px solid var(--border);border-radius:14px;padding:12px 18px;min-width:94px;box-shadow:var(--shadow)}
+  .statrow .s b{font-family:'Playfair Display',serif;font-size:28px;line-height:1;color:var(--text)}
+  .statrow .s span{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.9px;font-weight:600}
 
   .tabsbar{position:sticky;top:0;z-index:30;background:linear-gradient(var(--bg),var(--bg) 70%,rgba(11,14,20,.6));padding-top:8px}
   .tabs{display:flex;gap:7px;overflow-x:auto;padding:10px 0;scrollbar-width:none;border-bottom:1px solid var(--border2)}
@@ -249,7 +250,7 @@
   .field .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
   .err{color:var(--bad);font-size:13px;margin-top:6px}
   .pop{position:absolute;right:0;top:42px;width:270px;z-index:50;padding:14px;background:linear-gradient(180deg,var(--card),var(--elev));
-    border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);animation:pop .2s}
+    border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);animation:pop .2s;max-height:min(72vh,540px);overflow-y:auto}
 
   .loading{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:14px}
   .spinner{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
@@ -263,6 +264,13 @@
   .acct-img{width:22px;height:22px;border-radius:50%;object-fit:cover}
   .acct-name{font-size:13px;font-weight:600}
   .editor-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border2)}
+  .icon-btn:disabled{opacity:.28;cursor:default}
+  .icon-btn:disabled:hover{background:transparent;color:var(--muted)}
+  @media(min-width:820px){
+    .info-cols{columns:2;column-gap:18px}
+    .info-cols>.section-title{column-span:all}
+    .info-cols>.card{break-inside:avoid}
+  }
 </style>
 </head>
 <body>
@@ -1132,21 +1140,23 @@ function StatRow({trip,update}){
 /* ============ ITINERARY ============ */
 function Itinerary({trip,update}){
   const canEdit=React.useContext(CanEdit);
+  const [modalDay,setModalDay]=useState(null);
   const days=trip.days||[];
   const addDay=()=>update(t=>{ (t.days=t.days||[]).push({id:uid("d"),date:"",day:`Day ${t.days.length+1}`,title:"New day",location:"",type:"explore",emoji:"📍",details:[],tips:"",accommodation:null,suggestions:[]}); return t; });
   return (
     <div>
       <Weather trip={trip}/>
       {days.length>1 && <div className="rail">{days.map((d,i)=>{ const wd=weekdayShort(d.date);
-        return <div className="rpill" key={d.id||i} onClick={()=>{const el=document.getElementById("day-"+(d.id||i)); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});}}>
+        return <div className="rpill" key={d.id||i} title="Open day" onClick={()=>setModalDay(i)}>
           <div className="rw">{wd.w||("D"+(i+1))}</div><div className="rn">{wd.n||(i+1)}</div><div className="re">{d.emoji||"📍"}</div></div>; })}</div>}
       <div className="section-title"><h2>Itinerary</h2>{canEdit && <button className="btn sm" onClick={addDay}>+ Add day</button>}</div>
       {days.length===0 && <div className="card muted center">No days yet. Add your first day.</div>}
-      {days.map((d,i)=><DayCard key={d.id||i} day={d} idx={i} update={update}/>)}
+      {days.map((d,i)=><DayCard key={d.id||i} day={d} idx={i} update={update} onOpen={()=>setModalDay(i)}/>)}
+      {modalDay!=null && <DayModal days={days} idx={modalDay} setIdx={setModalDay} update={update}/>}
     </div>
   );
 }
-function DayCard({day,idx,update}){
+function DayCard({day,idx,update,onOpen}){
   const canEdit=React.useContext(CanEdit);
   const [open,setOpen]=useState(true);
   const patch=(fn)=>update(t=>{ fn(t.days[idx]); return t; });
@@ -1164,7 +1174,7 @@ function DayCard({day,idx,update}){
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
           <span className={"type-pill "+type} onClick={canEdit?cycleType:undefined} title={canEdit?"Change type":""} style={{cursor:canEdit?"pointer":"default"}}>{TC[type].label}</span>
-          <div style={{display:"flex",gap:2}}><button className="icon-btn" onClick={()=>setOpen(o=>!o)}>{open?"▾":"▸"}</button>{canEdit && <button className="icon-btn" onClick={del}>🗑</button>}</div>
+          <div style={{display:"flex",gap:2}}>{onOpen && <button className="icon-btn" title="Open day" onClick={onOpen}>⤢</button>}<button className="icon-btn" onClick={()=>setOpen(o=>!o)}>{open?"▾":"▸"}</button>{canEdit && <button className="icon-btn" onClick={del}>🗑</button>}</div>
         </div>
       </div>
       {open && <div style={{marginTop:14}}>
@@ -1186,6 +1196,32 @@ function DayCard({day,idx,update}){
           <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/>{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1))}>✕</span>}</span>))}</div>}
         {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.suggestions=d.suggestions||[]).push("New idea"))}>+ Add suggestion</button>}
       </div>}
+    </div>
+  );
+}
+
+/* ============ DAY MODAL ============ */
+function DayModal({days,idx,setIdx,update}){
+  const day=days[idx];
+  const go=(n)=>setIdx(Math.max(0,Math.min(days.length-1,n)));
+  useEffect(()=>{ const h=(e)=>{ if(e.key==="Escape") setIdx(null); else if(e.key==="ArrowLeft") go(idx-1); else if(e.key==="ArrowRight") go(idx+1); };
+    document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h); },[idx,days.length]);
+  if(!day) return null;
+  return (
+    <div className="overlay" onMouseDown={e=>e.target===e.currentTarget&&setIdx(null)}>
+      <div className="modal" style={{maxWidth:660}}>
+        <div className="modal-h">
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <button className="icon-btn" onClick={()=>go(idx-1)} disabled={idx===0} style={{fontSize:22}}>‹</button>
+            <span className="muted small" style={{minWidth:88,textAlign:"center"}}>Day {idx+1} of {days.length}</span>
+            <button className="icon-btn" onClick={()=>go(idx+1)} disabled={idx===days.length-1} style={{fontSize:22}}>›</button>
+          </div>
+          <button className="icon-btn" onClick={()=>setIdx(null)}>✕</button>
+        </div>
+        <div style={{padding:"2px 18px 18px",maxHeight:"76vh",overflowY:"auto"}}>
+          <DayCard day={day} idx={idx} update={update}/>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1361,7 +1397,7 @@ function Info({trip,update}){
   const hasStruct=info&&!isArr&&typeof info==="object"&&Object.keys(info).length>0;
   const addSection=()=>update(t=>{ if(!Array.isArray(t.info)) t.info=[]; t.info.push({title:"New section",content:""}); return t; });
   return (
-    <div>
+    <div className="info-cols">
       <div className="section-title"><h2>Info & Tips</h2>{canEdit&&(isArr||!hasStruct)&&<button className="btn sm" onClick={addSection}>+ Add section</button>}</div>
 
       {hotelDistances.length>0 && <div className="card info-block"><h3>🏨 Where you're staying</h3>
