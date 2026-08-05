@@ -924,6 +924,36 @@ const PHRASEBOOK={
   indonesian:["Hello - Halo / Selamat pagi (morning)","Thank you - Terima kasih","Please - Tolong","Yes / No - Ya / Tidak","Excuse me - Permisi","How much? - Berapa harganya?","Where is...? - Di mana...?","I don't understand - Saya tidak mengerti","Do you speak English? - Apakah Anda bisa bahasa Inggris?","Goodbye - Sampai jumpa"],
   hindi:["Hello - Namaste","Thank you - Dhanyavaad / Shukriya","Please - Kripya","Yes / No - Haan / Nahin","Excuse me - Maaf kijiye","How much? - Kitne ka hai?","Where is...? - ... kahan hai?","I don't understand - Mujhe samajh nahin aaya","Do you speak English? - Kya aap angrezi bolte hain?","Goodbye - Alvida / Phir milenge"]
 };
+const COUNTRY_LANGCODE={
+  france:["fr","French"],canada:["en","English (also French)"],belgium:["nl","Dutch / French"],
+  spain:["es","Spanish"],mexico:["es","Spanish"],peru:["es","Spanish"],argentina:["es","Spanish"],colombia:["es","Spanish"],chile:["es","Spanish"],"costa rica":["es","Spanish"],cuba:["es","Spanish"],
+  italy:["it","Italian"],portugal:["pt","Portuguese"],brazil:["pt","Portuguese"],
+  germany:["de","German"],austria:["de","German"],switzerland:["de","German / French / Italian"],
+  netherlands:["nl","Dutch"],japan:["ja","Japanese"],"south korea":["ko","Korean"],korea:["ko","Korean"],
+  china:["zh-CN","Mandarin Chinese"],taiwan:["zh-TW","Mandarin Chinese"],thailand:["th","Thai"],vietnam:["vi","Vietnamese"],
+  indonesia:["id","Indonesian"],malaysia:["ms","Malay"],philippines:["tl","Filipino"],singapore:["en","English"],
+  india:["hi","Hindi"],"sri lanka":["si","Sinhala"],nepal:["ne","Nepali"],cambodia:["km","Khmer"],
+  greece:["el","Greek"],turkey:["tr","Turkish"],russia:["ru","Russian"],ukraine:["uk","Ukrainian"],
+  poland:["pl","Polish"],"czech republic":["cs","Czech"],hungary:["hu","Hungarian"],croatia:["hr","Croatian"],
+  romania:["ro","Romanian"],serbia:["sr","Serbian"],
+  sweden:["sv","Swedish"],norway:["no","Norwegian"],denmark:["da","Danish"],finland:["fi","Finnish"],iceland:["is","Icelandic"],
+  morocco:["ar","Arabic (Darija) & French"],egypt:["ar","Arabic"],jordan:["ar","Arabic"],"united arab emirates":["ar","Arabic"],uae:["ar","Arabic"],"saudi arabia":["ar","Arabic"],tunisia:["ar","Arabic (Darija) & French"],
+  israel:["he","Hebrew"],iran:["fa","Persian (Farsi)"],
+  "south africa":["en","English (+ Afrikaans, Zulu)"],kenya:["sw","Swahili"],tanzania:["sw","Swahili"],
+  usa:["en","English"],"united states":["en","English"],uk:["en","English"],"united kingdom":["en","English"],ireland:["en","English"],australia:["en","English"],"new zealand":["en","English"]
+};
+async function translatePhrases(code){
+  const phrases=["Hello","Thank you","Yes","No","Excuse me","Can you help me?","How much is it?","Where is the bathroom?","I don't understand","Do you speak English?"];
+  const one=async q=>{ try{
+    const j=await (await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=en|${encodeURIComponent(code)}`)).json();
+    const t=j&&j.responseData&&j.responseData.translatedText;
+    if(!t || /MYMEMORY|QUOTA|INVALID|NO QUERY/i.test(t)) return null;
+    return `${q} - ${t}`;
+  }catch{ return null; } };
+  const res=await Promise.all(phrases.map(one));
+  const good=res.filter(Boolean);
+  return good.length>=6 ? good : null;
+}
 async function geocodePlace(name, country){
   try{
     const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=5&language=en&format=json`);
@@ -968,12 +998,19 @@ async function currencySection(country){
     const rate=j&&j.rates&&j.rates[code]; if(rate) rateLine=`\nApprox. ${Math.round(rate*100)/100} ${code} = 1 CAD (rates change daily).`; } }catch{}
   return {title:"💱 Currency", content:`${name} (${code}).${rateLine}\n\nPay in the local currency rather than your home currency to avoid inflated "dynamic conversion" fees. Use bank ATMs over airport exchange counters for the best rate.`};
 }
-function languageSection(country){
-  const langKey=COUNTRY_LANG[(country||"").trim().toLowerCase()]; if(!langKey) return null;
-  const name=LANG_NAME[langKey]||langKey; const phrases=PHRASEBOOK[langKey];
+async function languageSection(country){
+  const key=(country||"").trim().toLowerCase();
+  const curatedKey=COUNTRY_LANG[key];
+  const lc=COUNTRY_LANGCODE[key];
+  const name=(curatedKey&&LANG_NAME[curatedKey]) || (lc&&lc[1]) || null;
+  if(!name) return null;
   const head=`Primary language: ${name}. English is usually understood in tourist areas.`;
-  if(!phrases) return {title:"🗣 Language", content:head};
-  return {title:"🗣 Language & useful phrases", content:head+"\n\n"+phrases.join("\n")};
+  // 1) hand-curated romanized phrases (best quality) win
+  if(curatedKey && PHRASEBOOK[curatedKey]) return {title:"🗣 Language & useful phrases", content:head+"\n\n"+PHRASEBOOK[curatedKey].join("\n")};
+  // 2) otherwise translate a core set on the fly (covers any language)
+  if(lc && lc[0] && lc[0]!=="en"){ const ph=await translatePhrases(lc[0]); if(ph&&ph.length) return {title:"🗣 Language & useful phrases", content:head+"\n\n"+ph.join("\n")+"\n\n(Auto-translated as a starting point — double-check the important ones.)"}; }
+  // 3) fall back to just naming the language
+  return {title:"🗣 Language", content:head};
 }
 async function enrichTrip(slug, country){
   try{
@@ -995,7 +1032,7 @@ async function enrichTrip(slug, country){
     const first=Object.values(coords)[0];
     if(!has("🌡")&&first&&trip.meta&&trip.meta.startDate){ const w=await seasonalWeather(first,trip.meta.startDate,trip.meta.endDate); if(w){info.push(w);changed=true;} }
     if(!has("💱")){ const cur=await currencySection(country); if(cur){info.push(cur);changed=true;} }
-    if(!has("🗣")){ const lang=languageSection(country); if(lang){info.push(lang);changed=true;} }
+    if(!has("🗣")){ const lang=await languageSection(country); if(lang){info.push(lang);changed=true;} }
     const fresh=store.loadTrip(slug)||trip; const merged=Object.assign({},fresh);
     if(!hadCoords&&Object.keys(coords).length){ merged.cityCoords=coords; changed=true; }
     if(changed){ merged.info=info; store.saveTrip(slug,merged); }
