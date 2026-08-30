@@ -294,6 +294,25 @@
   .settle-line:first-child{border-top:none}
   .bal-pos{color:var(--good);font-weight:700}
   .bal-neg{color:var(--bad);font-weight:700}
+  /* mobile: free up the cramped hero header and give undo a permanent home */
+  .btn,.syncbadge,.chip,.acct{white-space:nowrap}
+  .undo-fab{display:none}
+  @media(max-width:760px){
+    .hdr-undo{display:none}
+    .sync-label{display:none}
+    .sync-label.always{display:inline}
+    .hero .top .syncbadge{padding:7px 10px}
+    .undo-fab{display:inline-flex;align-items:center;gap:8px;position:fixed;left:14px;
+      bottom:calc(16px + env(safe-area-inset-bottom));z-index:150;cursor:pointer;font-family:inherit;
+      background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);
+      color:var(--text);border-radius:999px;padding:12px 18px;font-size:14.5px;font-weight:600;
+      box-shadow:var(--shadow-lg);animation:fade .2s}
+    .undo-fab:active{transform:scale(.96)}
+  }
+  @media(max-width:560px){
+    .statrow{gap:9px}
+    .statrow .s{padding:11px 14px;min-width:0;flex:1 1 calc(50% - 5px)}
+  }
   /* toast */
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:13px;
     background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:14px;
@@ -1262,7 +1281,8 @@ function Homepage({go,auth}){
         <div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
           {archivedCount>0 && <button className="btn ghost sm" onClick={()=>setShowArchived(v=>!v)}>{showArchived?"Hide":"Show"} archived ({archivedCount})</button>}
-          <span className="syncbadge"><span className={"dot "+(online?status:"local")}/>{!online?"Offline":status==="live"?"Live sync":status==="error"?"Offline":status==="saving"?"Connecting…":"Local only"}</span>
+          <span className="syncbadge"><span className={"dot "+(online?status:"local")}/>
+            <span className={"sync-label"+(!online?" always":"")}>{!online?"Offline":status==="live"?"Live sync":status==="error"?"Offline":status==="saving"?"Connecting…":"Local only"}</span></span>
           <AccountChip auth={auth}/>
         </div>
       </div>
@@ -1422,10 +1442,10 @@ function TripDetail({slug,go,auth}){
         <div className="top"><div className="wrap">
           <button className="btn sm" onClick={()=>go(null)}>← Trips</button>
           <div style={{position:"relative",display:"flex",gap:8,alignItems:"center"}}>
-            {canEdit && undoDepth>0 && <button className="btn sm" title="Undo last change (Ctrl+Z)" onClick={undo}>↩ Undo</button>}
+            {canEdit && undoDepth>0 && <button className="btn sm hdr-undo" title="Undo last change (Ctrl+Z)" onClick={undo}>↩ Undo</button>}
             {canEdit && <span className="syncbadge" title={online?"":"Changes are saved on this device and will sync when you're back online"}>
               <span className={"dot "+(!online?"local":saveState==="saving"?"saving":"live")}/>
-              {!online?"Offline":saveState==="saving"?"Saving…":"Live sync"}</span>}
+              <span className={"sync-label"+(!online?" always":"")}>{!online?"Offline":saveState==="saving"?"Saving…":"Live sync"}</span></span>}
             <AccountChip auth={auth}/>
             {owner && <button className="btn sm" onClick={()=>setMenu(v=>!v)}>⚙︎</button>}
             {menu && owner && <SettingsMenu trip={trip} country={country} update={update} onDelete={()=>{store.deleteTrip(slug);go(null);}} close={()=>setMenu(false)}/>}
@@ -1454,6 +1474,8 @@ function TripDetail({slug,go,auth}){
         </div>
       </div>
       <Toast toast={toast} onUndo={()=>{undo();setToast(null);}} onClose={()=>setToast(null)}/>
+      {/* mobile has no Ctrl+Z, so keep undo permanently reachable (the toast carries its own) */}
+      {canEdit && undoDepth>0 && !toast && <button className="undo-fab" onClick={undo}>↩ Undo</button>}
     </CanEdit.Provider>
   );
 }
