@@ -180,7 +180,7 @@
   .type-pill.trek{background:rgba(239,147,80,.17);color:#f6b07e}
   .type-pill.flex{background:rgba(177,140,240,.17);color:#cbb0f7}
 
-  .detail-row{display:flex;gap:14px;padding:11px 0;position:relative}
+  .detail-row{display:flex;gap:12px;padding:11px 0;position:relative;align-items:flex-start}
   .detail-row+.detail-row{border-top:1px solid var(--border2)}
   .detail-time{flex:0 0 78px;color:var(--accent);font-weight:700;font-size:12.5px;padding-top:2px}
   .detail-body{flex:1;min-width:0}
@@ -266,6 +266,22 @@
   .acct-img{width:22px;height:22px;border-radius:50%;object-fit:cover}
   .acct-name{font-size:13px;font-weight:600}
   .editor-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border2)}
+  /* drag to reorder */
+  .drag-handle{cursor:grab;color:var(--muted2);font-size:15px;line-height:1;padding:3px 2px;border-radius:6px;
+    user-select:none;flex:0 0 auto;opacity:0;transition:opacity .15s,color .15s}
+  .drag-handle:hover{color:var(--text2)}
+  .drag-handle:active{cursor:grabbing}
+  .detail-row:hover .drag-handle,.card:hover .drag-handle,.info-block:hover .drag-handle{opacity:.75}
+  .dragging{opacity:.4}
+  .drag-over{box-shadow:inset 0 3px 0 -1px var(--accent)}
+  .drag-over-card{outline:2px dashed var(--accent);outline-offset:3px;border-radius:var(--radius)}
+  .move-btns{display:none;gap:1px;flex:0 0 auto}
+  @media(max-width:760px){ .move-btns{display:flex} .drag-handle{display:none} }
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:13px;
+    background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:14px;
+    padding:11px 14px 11px 18px;box-shadow:var(--shadow-lg);animation:pop .22s;font-size:14px;font-weight:500;
+    max-width:calc(100vw - 30px)}
   .icon-btn:disabled{opacity:.28;cursor:default}
   .icon-btn:disabled:hover{background:transparent;color:var(--muted)}
   @media(min-width:820px){
@@ -1040,6 +1056,68 @@ async function enrichTrip(slug, country){
   }catch(e){ console.warn("enrichTrip failed",e); return false; }
 }
 
+/* ============ DRAG-TO-REORDER ============ */
+function moveItem(arr,from,to){
+  if(!Array.isArray(arr)) return arr;
+  if(from<0||to<0||from>=arr.length||to>=arr.length||from===to) return arr;
+  const [x]=arr.splice(from,1); arr.splice(to,0,x); return arr;
+}
+function useDragList(onReorder){
+  const [dragIdx,setDragIdx]=useState(null);
+  const [overIdx,setOverIdx]=useState(null);
+  const [armed,setArmed]=useState(null);
+  const clear=()=>{ setDragIdx(null); setOverIdx(null); setArmed(null); };
+  const handleProps=(i)=>({ onMouseDown:()=>setArmed(i), onTouchStart:()=>setArmed(i), onMouseUp:()=>setArmed(null) });
+  const rowProps=(i)=>({
+    onDragStart:(e)=>{ setDragIdx(i); try{ e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/plain",String(i)); }catch(err){} e.stopPropagation(); },
+    onDragOver:(e)=>{ if(dragIdx==null) return; e.preventDefault(); e.stopPropagation(); try{e.dataTransfer.dropEffect="move";}catch(err){} if(overIdx!==i) setOverIdx(i); },
+    onDrop:(e)=>{ if(dragIdx==null) return; e.preventDefault(); e.stopPropagation(); const from=dragIdx; clear(); if(from!==i) onReorder(from,i); },
+    onDragEnd:clear
+  });
+  return {dragIdx,overIdx,armed,handleProps,rowProps};
+}
+function MoveBtns({i,len,onMove}){
+  return (<div className="move-btns">
+    <button className="icon-btn" title="Move up" disabled={i===0} onClick={()=>onMove(i,i-1)}>↑</button>
+    <button className="icon-btn" title="Move down" disabled={i===len-1} onClick={()=>onMove(i,i+1)}>↓</button>
+  </div>);
+}
+
+/* ============ STRUCTURED INFO -> EDITABLE SECTIONS ============ */
+const TITLECASE=s=>String(s).replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+function kvLines(obj){ return Object.entries(obj||{}).map(([k,v])=>`${TITLECASE(k)}: ${Array.isArray(v)?v.join(", "):v}`).join("\n"); }
+function structuredInfoToSections(info){
+  const out=[], used=new Set(); const take=k=>{ used.add(k); return info[k]; };
+  if(info.currency){ const c=take("currency"); out.push({title:"💱 Currency",content:[[c.name,c.rate].filter(Boolean).join(" · "),c.notes].filter(Boolean).join("\n\n")}); }
+  if(info.language){ const l=take("language"); out.push({title:"🗣 Language & useful phrases",content:[[l.primary,l.tourist_areas].filter(Boolean).join(" · "),(l.useful_phrases||[]).join("\n")].filter(Boolean).join("\n\n")}); }
+  if(info.weather_expectations) out.push({title:"🌡 Weather expectations",content:kvLines(take("weather_expectations"))});
+  if(info.food_price_ceilings) out.push({title:"🍽 Food price ceilings",content:kvLines(take("food_price_ceilings"))});
+  if(info.tipping) out.push({title:"💵 Tipping",content:kvLines(take("tipping"))});
+  if(info.scams_to_expect) out.push({title:"⚠️ Scams to expect",content:(take("scams_to_expect")||[]).join("\n")});
+  if(info.drinking) out.push({title:"🍷 Drinking",content:take("drinking")});
+  if(info.sim_card) out.push({title:"📱 SIM card",content:take("sim_card")});
+  if(info.moga_festival) out.push({title:"🎶 Festival",content:take("moga_festival")});
+  if(info.seans_notes){ const s=take("seans_notes"); const parts=[];
+    if(s.key_rules) parts.push("Key rules\n"+s.key_rules.join("\n"));
+    if(s.specific_spots) parts.push("Specific spots\n"+s.specific_spots.join("\n"));
+    out.push({title:"📓 Local friend's notes"+(s.source?` (${s.source})`:""),content:parts.join("\n\n")}); }
+  Object.keys(info||{}).forEach(k=>{ if(used.has(k)) return; const v=info[k];
+    const content = typeof v==="string" ? v : Array.isArray(v) ? v.join("\n") : (v&&typeof v==="object") ? kvLines(v) : String(v);
+    out.push({title:"📌 "+TITLECASE(k),content}); });
+  return out;
+}
+
+/* ============ TOAST ============ */
+function Toast({toast,onUndo,onClose}){
+  useEffect(()=>{ if(!toast) return; const t=setTimeout(onClose,6000); return()=>clearTimeout(t); },[toast,onClose]);
+  if(!toast) return null;
+  return (<div className="toast">
+    <span>{toast.msg}</span>
+    {toast.undo && <button className="btn sm" onClick={onUndo}>↩ Undo</button>}
+    <button className="icon-btn" onClick={onClose}>✕</button>
+  </div>);
+}
+
 /* ============ EDITABLE ============ */
 function Editable({value,onChange,placeholder="",className="",multiline=false,tag="span"}){
   const canEdit=React.useContext(CanEdit);
@@ -1246,18 +1324,52 @@ function TripDetail({slug,go,auth}){
   const [menu,setMenu]=useState(false);
   const timer=useRef(null);
   const savingRef=useRef(false);
+  const tripRef=useRef(trip);
+  const undoStack=useRef([]);
+  const [undoDepth,setUndoDepth]=useState(0);
+  const [toast,setToast]=useState(null);
 
   useEffect(()=>{
     if(!(FIREBASE_ON&&fb)) return;
     const unsub=fb.db.collection("trips").doc(slug).onSnapshot(doc=>{ setDocLoaded(true);
-      if(doc.exists&&!savingRef.current){ const d=normalize(slug,doc.data()); store.putLocal(slug,d); setTrip(d); }
+      if(doc.exists&&!savingRef.current){ const d=normalize(slug,doc.data()); store.putLocal(slug,d); tripRef.current=d; setTrip(d); }
     }, e=>{ setDocLoaded(true); console.warn(e); });
     return()=>unsub();
   },[slug]);
 
-  const update=useCallback((mut)=>{ setTrip(prev=>{ const next=typeof mut==="function"?mut(structuredClone(prev)):mut;
+  const commit=useCallback((next)=>{
+    tripRef.current=next; setTrip(next);
     setSaveState("saving"); savingRef.current=true; clearTimeout(timer.current);
-    timer.current=setTimeout(()=>{ store.saveTrip(slug,next); setSaveState("idle"); savingRef.current=false; },700); return next; }); },[slug]);
+    timer.current=setTimeout(()=>{ store.saveTrip(slug,next); setSaveState("idle"); savingRef.current=false; },700);
+  },[slug]);
+
+  // update(mutator, label) — label marks a notable action and shows an undo toast
+  const update=useCallback((mut,label)=>{
+    const prev=tripRef.current; if(!prev) return;
+    undoStack.current.push(structuredClone(prev));
+    if(undoStack.current.length>60) undoStack.current.shift();
+    setUndoDepth(undoStack.current.length);
+    commit(typeof mut==="function"?mut(structuredClone(prev)):mut);
+    if(label) setToast({msg:label,undo:true});
+  },[commit]);
+
+  const undo=useCallback(()=>{
+    const last=undoStack.current.pop();
+    setUndoDepth(undoStack.current.length);
+    if(!last) return;
+    commit(last);
+    setToast({msg:"Change undone",undo:false});
+  },[commit]);
+
+  useEffect(()=>{
+    const h=(e)=>{
+      if(!((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==="z"&&!e.shiftKey)) return;
+      const t=e.target;
+      if(t&&(t.isContentEditable||/^(input|textarea)$/i.test(t.tagName))) return; // let fields do their own undo
+      e.preventDefault(); undo();
+    };
+    window.addEventListener("keydown",h); return()=>window.removeEventListener("keydown",h);
+  },[undo]);
 
   if(!trip){
     if(!docLoaded) return <div className="wrap loading"><div className="spinner"/>Loading trip…</div>;
@@ -1274,6 +1386,7 @@ function TripDetail({slug,go,auth}){
         <div className="top"><div className="wrap">
           <button className="btn sm" onClick={()=>go(null)}>← Trips</button>
           <div style={{position:"relative",display:"flex",gap:8,alignItems:"center"}}>
+            {canEdit && undoDepth>0 && <button className="btn sm" title="Undo last change (Ctrl+Z)" onClick={undo}>↩ Undo</button>}
             {canEdit && <span className="syncbadge"><span className={"dot "+(saveState==="saving"?"saving":"live")}/>{saveState==="saving"?"Saving…":"Live sync"}</span>}
             <AccountChip auth={auth}/>
             {owner && <button className="btn sm" onClick={()=>setMenu(v=>!v)}>⚙︎</button>}
@@ -1301,6 +1414,7 @@ function TripDetail({slug,go,auth}){
           {tab==="info" && <Info trip={trip} update={update}/>}
         </div>
       </div>
+      <Toast toast={toast} onUndo={()=>{undo();setToast(null);}} onClose={()=>setToast(null)}/>
     </CanEdit.Provider>
   );
 }
@@ -1343,6 +1457,9 @@ function Itinerary({trip,update}){
   const [modalDay,setModalDay]=useState(null);
   const days=trip.days||[];
   const addDay=()=>update(t=>{ (t.days=t.days||[]).push({id:uid("d"),date:"",day:`Day ${t.days.length+1}`,title:"New day",location:"",type:"explore",emoji:"📍",details:[],tips:"",accommodation:null,suggestions:[]}); return t; });
+  const moveDay=(from,to)=>update(t=>{ moveItem(t.days,from,to);
+    t.days.forEach((d,i)=>{ if(/^day\s*\d+$/i.test(String(d.day||"").trim())) d.day="Day "+(i+1); }); return t; });
+  const dd=useDragList(moveDay);
   return (
     <div>
       <Weather trip={trip}/>
@@ -1351,18 +1468,28 @@ function Itinerary({trip,update}){
           <div className="rw">{wd.w||("D"+(i+1))}</div><div className="rn">{wd.n||(i+1)}</div><div className="re">{d.emoji||"📍"}</div></div>; })}</div>}
       <div className="section-title"><h2>Itinerary</h2>{canEdit && <button className="btn sm" onClick={addDay}>+ Add day</button>}</div>
       {days.length===0 && <div className="card muted center">No days yet. Add your first day.</div>}
-      {days.map((d,i)=><DayCard key={d.id||i} day={d} idx={i} update={update} onOpen={()=>setModalDay(i)}/>)}
+      {days.map((d,i)=>(
+        <div key={d.id||i}
+          className={(dd.dragIdx===i?"dragging ":"")+(dd.overIdx===i&&dd.dragIdx!==i?"drag-over-card":"")}
+          draggable={canEdit&&dd.armed===i} {...(canEdit?dd.rowProps(i):{})}>
+          <DayCard day={d} idx={i} update={update} onOpen={()=>setModalDay(i)}
+            dragHandle={canEdit?dd.handleProps(i):null} onMoveDay={canEdit?moveDay:null} dayCount={days.length}/>
+        </div>
+      ))}
       {modalDay!=null && <DayModal days={days} idx={modalDay} setIdx={setModalDay} update={update}/>}
     </div>
   );
 }
-function DayCard({day,idx,update,onOpen}){
+function DayCard({day,idx,update,onOpen,dragHandle,onMoveDay,dayCount}){
   const canEdit=React.useContext(CanEdit);
   const [open,setOpen]=useState(true);
-  const patch=(fn)=>update(t=>{ fn(t.days[idx]); return t; });
+  const patch=(fn,label)=>update(t=>{ fn(t.days[idx]); return t; },label);
   const cycleType=()=>patch(d=>{ d.type=TYPE_ORDER[(TYPE_ORDER.indexOf(d.type)+1)%TYPE_ORDER.length]; });
-  const del=()=>{ if(confirm("Delete this day?")) update(t=>{t.days.splice(idx,1);return t;}); };
+  const del=()=>update(t=>{t.days.splice(idx,1);return t;},"Day deleted");
   const type=TC[day.type]?day.type:"explore";
+  const moveDetail=(from,to)=>patch(d=>moveItem(d.details,from,to));
+  const di=useDragList(moveDetail);
+  const details=day.details||[];
   return (
     <div className={"card day "+type} id={"day-"+(day.id||idx)}>
       <div className="day-head">
@@ -1374,18 +1501,28 @@ function DayCard({day,idx,update,onOpen}){
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
           <span className={"type-pill "+type} onClick={canEdit?cycleType:undefined} title={canEdit?"Change type":""} style={{cursor:canEdit?"pointer":"default"}}>{TC[type].label}</span>
-          <div style={{display:"flex",gap:2}}>{onOpen && <button className="icon-btn" title="Open day" onClick={onOpen}>⤢</button>}<button className="icon-btn" onClick={()=>setOpen(o=>!o)}>{open?"▾":"▸"}</button>{canEdit && <button className="icon-btn" onClick={del}>🗑</button>}</div>
+          <div style={{display:"flex",gap:2,alignItems:"center"}}>
+            {dragHandle && <span className="drag-handle" title="Drag to reorder day" {...dragHandle}>⠿</span>}
+            {onMoveDay && <MoveBtns i={idx} len={dayCount} onMove={onMoveDay}/>}
+            {onOpen && <button className="icon-btn" title="Open day" onClick={onOpen}>⤢</button>}
+            <button className="icon-btn" onClick={()=>setOpen(o=>!o)}>{open?"▾":"▸"}</button>
+            {canEdit && <button className="icon-btn" title="Delete day" onClick={del}>🗑</button>}
+          </div>
         </div>
       </div>
       {open && <div style={{marginTop:14}}>
-        {(day.details||[]).map((dt,j)=>(
-          <div className="detail-row" key={j}>
+        {details.map((dt,j)=>(
+          <div key={j}
+            className={"detail-row"+(di.dragIdx===j?" dragging":"")+(di.overIdx===j&&di.dragIdx!==j?" drag-over":"")}
+            draggable={canEdit&&di.armed===j} {...(canEdit?di.rowProps(j):{})}>
+            {canEdit && <span className="drag-handle" style={{marginTop:2}} title="Drag to reorder" {...di.handleProps(j)}>⠿</span>}
             <div className="detail-time"><Editable value={dt.time} onChange={v=>patch(d=>d.details[j].time=v)} placeholder="Time"/></div>
             <div className="detail-body">
               <div className="detail-text"><Editable value={dt.text} onChange={v=>patch(d=>d.details[j].text=v)} placeholder="What's happening"/></div>
               <div className="detail-sub"><Editable value={dt.sub} onChange={v=>patch(d=>d.details[j].sub=v)} placeholder="Notes" multiline/></div>
             </div>
-            {canEdit && <button className="icon-btn" onClick={()=>patch(d=>d.details.splice(j,1))}>✕</button>}
+            {canEdit && <MoveBtns i={j} len={details.length} onMove={moveDetail}/>}
+            {canEdit && <button className="icon-btn" title="Delete item" onClick={()=>patch(d=>d.details.splice(j,1),"Item deleted")}>✕</button>}
           </div>
         ))}
         {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.details=d.details||[]).push({time:"",text:"",sub:""}))}>+ Add item</button>}
@@ -1393,7 +1530,7 @@ function DayCard({day,idx,update,onOpen}){
         {(canEdit || day.accommodation) && <div className="accom"><span style={{fontSize:18}}>🛏</span><div style={{flex:1}}><div className="al">Accommodation</div>
           <Editable value={day.accommodation||""} onChange={v=>patch(d=>d.accommodation=v||null)} placeholder="Hotel, riad, Airbnb…"/></div></div>}
         {(day.suggestions&&day.suggestions.length>0) && <div className="suggs">{day.suggestions.map((s,k)=>(
-          <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/>{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1))}>✕</span>}</span>))}</div>}
+          <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/>{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1),"Suggestion deleted")}>✕</span>}</span>))}</div>}
         {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.suggestions=d.suggestions||[]).push("New idea"))}>+ Add suggestion</button>}
       </div>}
     </div>
@@ -1595,21 +1732,36 @@ function Info({trip,update}){
     return Object.entries(hc).map(([city,h])=>({city,name:h.name,km:cc[city]?haversine(h,cc[city]):null})).filter(x=>x.name); },[trip.hotelCoords,trip.cityCoords]);
   const isArr=Array.isArray(info);
   const hasStruct=info&&!isArr&&typeof info==="object"&&Object.keys(info).length>0;
-  const addSection=()=>update(t=>{ if(!Array.isArray(t.info)) t.info=[]; t.info.push({title:"New section",content:""}); return t; });
+  const addSection=()=>update(t=>{ if(!Array.isArray(t.info)) t.info=[]; t.info.push({title:"📝 New section",content:""}); return t; });
+  const moveSection=(from,to)=>update(t=>{ moveItem(t.info,from,to); return t; });
+  const si=useDragList(moveSection);
+  const makeEditable=()=>update(t=>{ t.info=structuredInfoToSections(t.info); return t; },"Info is now editable");
   return (
     <div className="info-cols">
-      <div className="section-title"><h2>Info & Tips</h2>{canEdit&&(isArr||!hasStruct)&&<button className="btn sm" onClick={addSection}>+ Add section</button>}</div>
+      <div className="section-title"><h2>Info & Tips</h2>{canEdit&&!hasStruct&&<button className="btn sm" onClick={addSection}>+ Add section</button>}</div>
+
+      {canEdit && hasStruct && <div className="card" style={{borderColor:"rgba(120,187,255,.35)"}}>
+        <div style={{fontWeight:600,marginBottom:4}}>✎ Unlock editing for this trip's info</div>
+        <div className="muted small" style={{marginBottom:11}}>This trip's info came from the original fixed format, so it's read-only. Convert it into editable sections (nothing is lost) to add phrases, notes, and your own sections.</div>
+        <button className="btn primary sm" onClick={makeEditable}>Make info editable</button>
+      </div>}
 
       {hotelDistances.length>0 && <div className="card info-block"><h3>🏨 Where you're staying</h3>
         <ul className="info-list">{hotelDistances.map(h=><li key={h.city}><b>{h.name}</b> <span className="muted" style={{textTransform:"capitalize"}}>({h.city})</span>{h.km!=null && <span className="muted"> · ~{h.km} km from center</span>}</li>)}</ul></div>}
 
       {isArr && info.map((sec,i)=>(
-        <div className="card info-block" key={i}>
-          <div style={{display:"flex",justifyContent:"space-between",gap:10}}>
-            <h3><Editable value={sec.title} onChange={v=>update(t=>{t.info[i].title=v;return t;})} placeholder="Section title"/></h3>
-            {canEdit && <button className="icon-btn" onClick={()=>update(t=>{t.info.splice(i,1);return t;})}>🗑</button>}
+        <div key={i}
+          className={"card info-block"+(si.dragIdx===i?" dragging":"")+(si.overIdx===i&&si.dragIdx!==i?" drag-over-card":"")}
+          draggable={canEdit&&si.armed===i} {...(canEdit?si.rowProps(i):{})}>
+          <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"flex-start"}}>
+            <h3 style={{flex:1,minWidth:0}}><Editable value={sec.title} onChange={v=>update(t=>{t.info[i].title=v;return t;})} placeholder="Section title"/></h3>
+            {canEdit && <div style={{display:"flex",alignItems:"center",gap:2,flexShrink:0}}>
+              <span className="drag-handle" title="Drag to reorder" {...si.handleProps(i)}>⠿</span>
+              <MoveBtns i={i} len={info.length} onMove={moveSection}/>
+              <button className="icon-btn" title="Delete section" onClick={()=>update(t=>{t.info.splice(i,1);return t;},"Section deleted")}>🗑</button>
+            </div>}
           </div>
-          <div className="info-content"><Editable value={sec.content} onChange={v=>update(t=>{t.info[i].content=v;return t;})} placeholder="Details…" multiline/></div>
+          <div className="info-content"><Editable value={sec.content} onChange={v=>update(t=>{t.info[i].content=v;return t;})} placeholder="Add notes, phrases, anything…" multiline/></div>
         </div>
       ))}
 
