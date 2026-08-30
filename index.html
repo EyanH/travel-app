@@ -32,6 +32,9 @@
     --travel:#5aa2ff; --explore:#55c98a; --trek:#ef9350; --flex:#b18cf0;
     --shadow:0 10px 40px -12px rgba(0,0,0,.7); --shadow-lg:0 24px 70px -20px rgba(0,0,0,.8);
     --radius:18px; --radius-sm:12px;
+    /* iOS safe areas, as variables so they can be inspected and tested */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
@@ -294,6 +297,23 @@
   .settle-line:first-child{border-top:none}
   .bal-pos{color:var(--good);font-weight:700}
   .bal-neg{color:var(--bad);font-weight:700}
+  /* Installed as an app, iOS draws our content *under* the status bar and home
+     indicator (that's what makes the hero photo bleed to the very top). Push the
+     interactive bits out of those zones. Browser mode needs none of this. */
+  html.standalone .hero{height:calc(300px + var(--sat))}
+  html.standalone .hero .top{top:calc(16px + var(--sat))}
+  html.standalone .topbar{padding-top:calc(24px + var(--sat))}
+  html.standalone .landing{margin-top:calc(13vh + var(--sat))}
+  /* sticky tabs park below the status bar instead of under it (no padding tricks,
+     so nothing overlaps the stats while the bar is still in normal flow) */
+  html.standalone .tabsbar{top:var(--sat)}
+  /* solid strip behind the clock/battery: keeps them legible and stops page
+     content ghosting through while scrolling */
+  html.standalone body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);
+    z-index:35;pointer-events:none;background:var(--bg)}
+  html.standalone .toast{bottom:calc(24px + var(--sab))}
+  @media(max-width:560px){ html.standalone .hero{height:calc(230px + var(--sat))} }
+
   /* mobile: free up the cramped hero header and give undo a permanent home */
   .btn,.syncbadge,.chip,.acct{white-space:nowrap}
   .undo-fab{display:none}
@@ -303,7 +323,7 @@
     .sync-label.always{display:inline}
     .hero .top .syncbadge{padding:7px 10px}
     .undo-fab{display:inline-flex;align-items:center;gap:8px;position:fixed;left:14px;
-      bottom:calc(16px + env(safe-area-inset-bottom));z-index:150;cursor:pointer;font-family:inherit;
+      bottom:calc(16px + var(--sab));z-index:150;cursor:pointer;font-family:inherit;
       background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);
       color:var(--text);border-radius:999px;padding:12px 18px;font-size:14.5px;font-weight:600;
       box-shadow:var(--shadow-lg);animation:fade .2s}
@@ -329,6 +349,19 @@
 </head>
 <body>
 <div id="root"></div>
+<script>
+  /* Flag installed-app (standalone) mode before first paint so the safe-area
+     rules above apply without a flash. navigator.standalone covers older iOS,
+     the media query covers everything else. */
+  (function(){
+    try{
+      var s = window.navigator.standalone === true ||
+              (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+              (window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches);
+      if(s) document.documentElement.classList.add("standalone");
+    }catch(e){}
+  })();
+</script>
 
 <script id="seed-morocco" type="application/json">
 {
