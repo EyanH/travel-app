@@ -7,6 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <title>Travel</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Travel" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet" />
@@ -277,6 +281,19 @@
   .drag-over-card{outline:2px dashed var(--accent);outline-offset:3px;border-radius:var(--radius)}
   .move-btns{display:none;gap:1px;flex:0 0 auto}
   @media(max-width:760px){ .move-btns{display:flex} .drag-handle{display:none} }
+  /* costs */
+  .cost-row{display:flex;gap:16px;align-items:flex-start}
+  .cost-amt{font-family:'Playfair Display',serif;font-size:23px;font-weight:700;white-space:nowrap}
+  .cost-meta{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:6px;font-size:12.5px;color:var(--muted)}
+  .mini-select{background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:3px 7px;font-size:12.5px}
+  .mini-select:focus{outline:none;border-color:var(--accent)}
+  .who-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--border);
+    background:var(--card2);color:var(--muted);cursor:pointer;user-select:none;transition:.14s}
+  .who-chip.on{background:rgba(120,187,255,.16);border-color:rgba(120,187,255,.45);color:#a9d1ff}
+  .settle-line{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border2);font-size:14px;flex-wrap:wrap}
+  .settle-line:first-child{border-top:none}
+  .bal-pos{color:var(--good);font-weight:700}
+  .bal-neg{color:var(--bad);font-weight:700}
   /* toast */
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:13px;
     background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:14px;
@@ -757,11 +774,28 @@ const OWNER_EMAILS = ["eyan.howlader@gmail.com"];
 let fb = null;
 function initFirebase(){
   if(!FIREBASE_ON || fb) return fb;
-  try{ const app=firebase.initializeApp(FIREBASE_CONFIG); fb={db:firebase.firestore(app), auth:firebase.auth(app)}; }
+  try{
+    const app=firebase.initializeApp(FIREBASE_CONFIG);
+    const db=firebase.firestore(app);
+    // Offline cache: trips stay readable with no signal, and edits queue until back online.
+    try{ db.enablePersistence({synchronizeTabs:true}).catch(()=>{}); }catch(e){}
+    fb={db, auth:firebase.auth(app)};
+  }
   catch(e){ console.warn("Firebase init failed:",e); fb=null; }
   return fb;
 }
 initFirebase();
+// Offline support (only meaningful over http/https, not file://)
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(e=>console.warn("SW failed",e)); });
+}
+function useOnline(){
+  const [online,setOnline]=useState(navigator.onLine!==false);
+  useEffect(()=>{ const on=()=>setOnline(true), off=()=>setOnline(false);
+    window.addEventListener("online",on); window.addEventListener("offline",off);
+    return()=>{ window.removeEventListener("online",on); window.removeEventListener("offline",off); }; },[]);
+  return online;
+}
 function emailKey(e){ return String(e||"").toLowerCase().replace(/[^a-z0-9]/g,"_"); }
 function firstNameFrom(user){ if(!user) return "You"; const n=(user.displayName||"").trim(); if(n) return n.split(/\s+/)[0];
   const lp=((user.email||"").split("@")[0]||"").replace(/[._-]+/g," ").trim(); return (lp.split(" ")[0]||"You").replace(/^./,c=>c.toUpperCase()); }
@@ -1203,6 +1237,7 @@ function Homepage({go,auth}){
   const [showArchived,setShowArchived]=useState(false);
   const [modal,setModal]=useState(false);
   const [status,setStatus]=useState(FIREBASE_ON?"saving":"local");
+  const online=useOnline();
 
   const refresh=useCallback(()=>{ const l=store.listSlugs().map(s=>store.loadTrip(s)).filter(Boolean).map(t=>normalize(t.slug,t)); setTrips(l); },[]);
   useEffect(()=>{ refresh(); },[refresh]);
@@ -1227,7 +1262,7 @@ function Homepage({go,auth}){
         <div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
           {archivedCount>0 && <button className="btn ghost sm" onClick={()=>setShowArchived(v=>!v)}>{showArchived?"Hide":"Show"} archived ({archivedCount})</button>}
-          <span className="syncbadge"><span className={"dot "+status}/>{status==="live"?"Live sync":status==="error"?"Offline":status==="saving"?"Connecting…":"Local only"}</span>
+          <span className="syncbadge"><span className={"dot "+(online?status:"local")}/>{!online?"Offline":status==="live"?"Live sync":status==="error"?"Offline":status==="saving"?"Connecting…":"Local only"}</span>
           <AccountChip auth={auth}/>
         </div>
       </div>
@@ -1315,7 +1350,7 @@ function NewTripModal({onClose,onCreated}){
 }
 
 /* ============ TRIP DETAIL ============ */
-const TABS=[{k:"itinerary",label:"Itinerary",icon:"🗺️"},{k:"flights",label:"Flights",icon:"✈️"},{k:"packing",label:"Packing",icon:"🎒"},{k:"quests",label:"Quests",icon:"⚔️"},{k:"info",label:"Info",icon:"📔"}];
+const TABS=[{k:"itinerary",label:"Itinerary",icon:"🗺️"},{k:"flights",label:"Flights",icon:"✈️"},{k:"packing",label:"Packing",icon:"🎒"},{k:"costs",label:"Costs",icon:"💰"},{k:"quests",label:"Quests",icon:"⚔️"},{k:"info",label:"Info",icon:"📔"}];
 function TripDetail({slug,go,auth}){
   const [trip,setTrip]=useState(()=>{ const t=store.loadTrip(slug); return t?normalize(slug,t):null; });
   const [docLoaded,setDocLoaded]=useState(!FIREBASE_ON);
@@ -1328,6 +1363,7 @@ function TripDetail({slug,go,auth}){
   const undoStack=useRef([]);
   const [undoDepth,setUndoDepth]=useState(0);
   const [toast,setToast]=useState(null);
+  const online=useOnline();
 
   useEffect(()=>{
     if(!(FIREBASE_ON&&fb)) return;
@@ -1387,7 +1423,9 @@ function TripDetail({slug,go,auth}){
           <button className="btn sm" onClick={()=>go(null)}>← Trips</button>
           <div style={{position:"relative",display:"flex",gap:8,alignItems:"center"}}>
             {canEdit && undoDepth>0 && <button className="btn sm" title="Undo last change (Ctrl+Z)" onClick={undo}>↩ Undo</button>}
-            {canEdit && <span className="syncbadge"><span className={"dot "+(saveState==="saving"?"saving":"live")}/>{saveState==="saving"?"Saving…":"Live sync"}</span>}
+            {canEdit && <span className="syncbadge" title={online?"":"Changes are saved on this device and will sync when you're back online"}>
+              <span className={"dot "+(!online?"local":saveState==="saving"?"saving":"live")}/>
+              {!online?"Offline":saveState==="saving"?"Saving…":"Live sync"}</span>}
             <AccountChip auth={auth}/>
             {owner && <button className="btn sm" onClick={()=>setMenu(v=>!v)}>⚙︎</button>}
             {menu && owner && <SettingsMenu trip={trip} country={country} update={update} onDelete={()=>{store.deleteTrip(slug);go(null);}} close={()=>setMenu(false)}/>}
@@ -1410,6 +1448,7 @@ function TripDetail({slug,go,auth}){
           {tab==="itinerary" && <Itinerary trip={trip} update={update}/>}
           {tab==="flights" && <Flights trip={trip} update={update}/>}
           {tab==="packing" && <Packing trip={trip} update={update} auth={auth}/>}
+          {tab==="costs" && <Costs trip={trip} update={update} auth={auth}/>}
           {tab==="quests" && <Quests trip={trip} update={update}/>}
           {tab==="info" && <Info trip={trip} update={update}/>}
         </div>
@@ -1720,6 +1759,173 @@ function Quests({trip,update}){
         </div>
       ))}
       {canEdit && <div className="card"><AddLine placeholder="Add a quest…" onAdd={add}/></div>}
+    </div>
+  );
+}
+
+/* ============ COSTS ============ */
+function parseAmount(s){ const n=parseFloat(String(s==null?"":s).replace(/[^0-9.\-]/g,"")); return isNaN(n)?null:n; }
+function money(n,cur){ if(n==null||isNaN(n)) return "—";
+  return (cur||"$")+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function defaultTravelers(trip,auth){
+  const out=[];
+  Object.values(trip.packingByUser||{}).forEach(p=>{ if(p&&p.name&&!out.includes(p.name)) out.push(p.name); });
+  if(auth&&auth.user){ const n=firstNameFrom(auth.user); if(!out.includes(n)) out.push(n); }
+  (trip.editors||[]).forEach(e=>{ const n=String(e).split("@")[0].replace(/[._-]+/g," ").trim().replace(/^./,c=>c.toUpperCase());
+    if(n&&!out.includes(n)) out.push(n); });
+  return out;
+}
+function settleUp(balances){
+  const cred=[],deb=[];
+  Object.entries(balances).forEach(([n,v])=>{ const r=Math.round(v*100)/100;
+    if(r>0.009) cred.push([n,r]); else if(r<-0.009) deb.push([n,-r]); });
+  cred.sort((a,b)=>b[1]-a[1]); deb.sort((a,b)=>b[1]-a[1]);
+  const out=[]; let i=0,j=0;
+  while(i<deb.length&&j<cred.length){
+    const amt=Math.min(deb[i][1],cred[j][1]);
+    if(amt>0.009) out.push({from:deb[i][0],to:cred[j][0],amount:amt});
+    deb[i][1]-=amt; cred[j][1]-=amt;
+    if(deb[i][1]<=0.009) i++;
+    if(cred[j][1]<=0.009) j++;
+  }
+  return out;
+}
+function Costs({trip,update,auth}){
+  const canEdit=React.useContext(CanEdit);
+  const costs=trip.costs||[];
+  const cur=trip.costCurrency||"$";
+  const travelers=(trip.travelers&&trip.travelers.length)?trip.travelers:defaultTravelers(trip,auth);
+
+  const {total,balances,perPerson}=useMemo(()=>{
+    const bal={}; travelers.forEach(t=>bal[t]=0);
+    const per={}; travelers.forEach(t=>per[t]=0);
+    let tot=0;
+    costs.forEach(c=>{
+      const amt=Number(c.amount); if(!amt||isNaN(amt)) return;
+      tot+=amt;
+      const who=((c.forWhom&&c.forWhom.length)?c.forWhom:travelers).filter(n=>travelers.includes(n));
+      if(!who.length) return;
+      const share=amt/who.length;
+      who.forEach(n=>{ bal[n]-=share; per[n]+=share; });
+      if(c.paidBy&&bal[c.paidBy]!==undefined) bal[c.paidBy]+=amt;
+    });
+    return {total:tot,balances:bal,perPerson:per};
+  },[costs,travelers]);
+
+  const settlements=useMemo(()=>settleUp(balances),[balances]);
+  const anyAmounts=costs.some(c=>Number(c.amount)>0);
+
+  const setTravelers=(fn)=>update(t=>{ t.travelers=(t.travelers&&t.travelers.length)?t.travelers:travelers.slice(); fn(t.travelers); return t; });
+  // renaming/removing a person keeps existing costs pointing at the right people
+  const renameTraveler=(i,v)=>update(t=>{
+    const list=(t.travelers&&t.travelers.length)?t.travelers:travelers.slice();
+    const old=list[i], nv=String(v||"").trim();
+    if(!nv||nv===old){ t.travelers=list; return t; }
+    list[i]=nv; t.travelers=list;
+    (t.costs||[]).forEach(c=>{ if(c.paidBy===old) c.paidBy=nv;
+      if(Array.isArray(c.forWhom)) c.forWhom=c.forWhom.map(x=>x===old?nv:x); });
+    return t;
+  });
+  const removeTraveler=(i)=>update(t=>{
+    const list=(t.travelers&&t.travelers.length)?t.travelers:travelers.slice();
+    const old=list[i]; list.splice(i,1); t.travelers=list;
+    (t.costs||[]).forEach(c=>{ if(c.paidBy===old) c.paidBy="";
+      if(Array.isArray(c.forWhom)) c.forWhom=c.forWhom.filter(x=>x!==old); });
+    return t;
+  },"Person removed");
+  const addCost=()=>update(t=>{ (t.costs=t.costs||[]).push({id:uid("c"),label:"New cost",amount:null,paidBy:"",forWhom:[]}); return t; });
+  const patch=(i,fn)=>update(t=>{ fn(t.costs[i]); return t; });
+
+  return (
+    <div>
+      <div className="section-title"><h2>Costs</h2>{canEdit && <button className="btn sm" onClick={addCost}>+ Add cost</button>}</div>
+
+      {/* who's splitting */}
+      <div className="card tight">
+        <div className="fl" style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:8}}>Splitting between</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:7,alignItems:"center"}}>
+          {travelers.map((n,i)=>(
+            <span className="chip" key={i} title={canEdit?"Click the name to rename":""}>
+              <Editable value={n} onChange={v=>renameTraveler(i,v)} placeholder="Name"/>
+              {canEdit && <span className="icon-btn" style={{padding:0,marginLeft:3}} title="Remove"
+                onClick={()=>removeTraveler(i)}>✕</span>}
+            </span>
+          ))}
+          {travelers.length===0 && <span className="muted small">Add the people sharing costs.</span>}
+          {canEdit && <button className="btn ghost sm" onClick={()=>{ const n=prompt("Name:"); if(n&&n.trim()) setTravelers(a=>{ if(!a.includes(n.trim())) a.push(n.trim()); }); }}>+ Add person</button>}
+          <span style={{marginLeft:"auto"}} className="muted small">Currency <Editable value={cur} onChange={v=>update(t=>{t.costCurrency=v||"$";return t;})} placeholder="$"/></span>
+        </div>
+      </div>
+
+      {/* summary */}
+      {anyAmounts && <div className="card">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",flexWrap:"wrap",gap:10}}>
+          <h3 style={{fontSize:19}}>Summary</h3>
+          <div><span className="muted small">Trip total </span><b style={{fontFamily:"'Playfair Display',serif",fontSize:24}}>{money(total,cur)}</b></div>
+        </div>
+        {travelers.length>0 && <div style={{marginTop:12}}>
+          {travelers.map(n=>{
+            const b=Math.round((balances[n]||0)*100)/100;
+            return (<div className="settle-line" key={n}>
+              <span><b>{n}</b> <span className="muted small">owes {money(perPerson[n]||0,cur)} of the total</span></span>
+              <span className={b>0.009?"bal-pos":b<-0.009?"bal-neg":"muted"}>
+                {b>0.009?`is owed ${money(b,cur)}`:b<-0.009?`owes ${money(-b,cur)}`:"settled"}
+              </span>
+            </div>);
+          })}
+        </div>}
+        {settlements.length>0 && <div style={{marginTop:14}}>
+          <div className="fl" style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:6}}>Settle up</div>
+          {settlements.map((s,i)=><div key={i} style={{fontSize:14,padding:"3px 0"}}>💸 <b>{s.from}</b> pays <b>{s.to}</b> <span className="bal-pos">{money(s.amount,cur)}</span></div>)}
+        </div>}
+      </div>}
+
+      {/* cost rows */}
+      {costs.map((c,i)=>{
+        const who=((c.forWhom&&c.forWhom.length)?c.forWhom:travelers).filter(n=>travelers.includes(n));
+        const share=(Number(c.amount)&&who.length)?Number(c.amount)/who.length:null;
+        return (
+          <div className="card" key={c.id||i}>
+            <div className="cost-row">
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:16,fontWeight:600}}><Editable value={c.label} onChange={v=>patch(i,x=>x.label=v)} placeholder="What is this?"/></div>
+                <div className="cost-meta">
+                  <span>Paid by{" "}
+                    {canEdit ? <select className="mini-select" value={c.paidBy||""} onChange={e=>patch(i,x=>x.paidBy=e.target.value)}>
+                        <option value="">not yet</option>
+                        {travelers.map(n=><option key={n} value={n}>{n}</option>)}
+                      </select>
+                      : <b>{c.paidBy||"not yet"}</b>}
+                  </span>
+                  {share!=null && <span>· {money(share,cur)} each</span>}
+                </div>
+                {canEdit && travelers.length>0 && <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
+                  <span className="muted" style={{fontSize:11.5,alignSelf:"center"}}>Split:</span>
+                  {travelers.map(n=>{
+                    const on=who.includes(n);
+                    return <span key={n} className={"who-chip"+(on?" on":"")} onClick={()=>patch(i,x=>{
+                      const list=((x.forWhom&&x.forWhom.length)?x.forWhom:travelers.slice());
+                      const at=list.indexOf(n); if(at>=0) list.splice(at,1); else list.push(n);
+                      x.forWhom=list;
+                    })}>{n}</span>;
+                  })}
+                </div>}
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div className="cost-amt">{cur}<Editable value={c.amount==null?"":String(c.amount)} onChange={v=>patch(i,x=>x.amount=parseAmount(v))} placeholder="TBD"/></div>
+                {canEdit && <button className="icon-btn" title="Delete cost" onClick={()=>update(t=>{t.costs.splice(i,1);return t;},"Cost deleted")}>🗑</button>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {costs.length===0 && <div className="card center">
+        <div style={{fontSize:34,marginBottom:6}}>💰</div>
+        <div style={{fontWeight:600,marginBottom:4}}>Add costs here</div>
+        <div className="muted small" style={{marginBottom:14}}>Flights, hotels, tours, dinners. Mark who paid and who it's split between, and the app works out who owes who.</div>
+        {canEdit && <button className="btn primary sm" onClick={addCost}>+ Add first cost</button>}
+      </div>}
     </div>
   );
 }
