@@ -1822,6 +1822,16 @@ function Quests({trip,update}){
 function parseAmount(s){ const n=parseFloat(String(s==null?"":s).replace(/[^0-9.\-]/g,"")); return isNaN(n)?null:n; }
 function money(n,cur){ if(n==null||isNaN(n)) return "—";
   return (cur||"$")+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+const COST_CATS=[
+  {k:"stay",icon:"🏨",label:"Hotel / stay"},
+  {k:"food",icon:"🍽",label:"Food & drink"},
+  {k:"transport",icon:"🚕",label:"Taxi / transport"},
+  {k:"flight",icon:"✈️",label:"Flights"},
+  {k:"activity",icon:"🎟",label:"Activity / tour"},
+  {k:"shopping",icon:"🛍",label:"Shopping"},
+  {k:"other",icon:"📦",label:"Other"}
+];
+const catOf=k=>COST_CATS.find(c=>c.k===k)||null;
 function defaultTravelers(trip,auth){
   const out=[];
   Object.values(trip.packingByUser||{}).forEach(p=>{ if(p&&p.name&&!out.includes(p.name)) out.push(p.name); });
@@ -1851,20 +1861,22 @@ function Costs({trip,update,auth}){
   const cur=trip.costCurrency||"$";
   const travelers=(trip.travelers&&trip.travelers.length)?trip.travelers:defaultTravelers(trip,auth);
 
-  const {total,balances,perPerson}=useMemo(()=>{
+  const {total,balances,perPerson,byCat}=useMemo(()=>{
     const bal={}; travelers.forEach(t=>bal[t]=0);
     const per={}; travelers.forEach(t=>per[t]=0);
+    const cats={};
     let tot=0;
     costs.forEach(c=>{
       const amt=Number(c.amount); if(!amt||isNaN(amt)) return;
       tot+=amt;
+      const ck=c.cat||"other"; cats[ck]=(cats[ck]||0)+amt;
       const who=((c.forWhom&&c.forWhom.length)?c.forWhom:travelers).filter(n=>travelers.includes(n));
       if(!who.length) return;
       const share=amt/who.length;
       who.forEach(n=>{ bal[n]-=share; per[n]+=share; });
       if(c.paidBy&&bal[c.paidBy]!==undefined) bal[c.paidBy]+=amt;
     });
-    return {total:tot,balances:bal,perPerson:per};
+    return {total:tot,balances:bal,perPerson:per,byCat:cats};
   },[costs,travelers]);
 
   const settlements=useMemo(()=>settleUp(balances),[balances]);
@@ -1888,8 +1900,24 @@ function Costs({trip,update,auth}){
       if(Array.isArray(c.forWhom)) c.forWhom=c.forWhom.filter(x=>x!==old); });
     return t;
   },"Person removed");
-  const addCost=()=>update(t=>{ (t.costs=t.costs||[]).push({id:uid("c"),label:"New cost",amount:null,paidBy:"",forWhom:[]}); return t; });
+  const [focusId,setFocusId]=useState(null);
+  const addCost=()=>{ const id=uid("c");
+    update(t=>{ (t.costs=t.costs||[]).push({id,label:"",amount:null,paidBy:"",forWhom:[],cat:""}); return t; });
+    setFocusId(id); };
   const patch=(i,fn)=>update(t=>{ fn(t.costs[i]); return t; });
+  // picking a category names the expense too, so it's one tap on a phone
+  const setCat=(i,k)=>patch(i,x=>{ x.cat=k;
+    const def=(catOf(k)||{}).label;
+    if(k && def && !String(x.label||"").trim()) x.label=def; });
+  // drop the cursor straight into the new expense's name
+  useEffect(()=>{ if(!focusId) return;
+    const el=document.querySelector('[data-costid="'+focusId+'"] .cost-label .ed');
+    if(el){ el.focus();
+      try{ const r=document.createRange(); r.selectNodeContents(el); r.collapse(false);
+        const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){}
+      el.scrollIntoView({block:"center",behavior:"smooth"}); }
+    setFocusId(null);
+  },[focusId,costs.length]);
 
   return (
     <div>
@@ -1933,6 +1961,14 @@ function Costs({trip,update,auth}){
           <div className="fl" style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:6}}>Settle up</div>
           {settlements.map((s,i)=><div key={i} style={{fontSize:14,padding:"3px 0"}}>💸 <b>{s.from}</b> pays <b>{s.to}</b> <span className="bal-pos">{money(s.amount,cur)}</span></div>)}
         </div>}
+        {Object.keys(byCat).length>1 && <div style={{marginTop:14}}>
+          <div className="fl" style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:6}}>Where it went</div>
+          {Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+            const cat=catOf(k)||{icon:"📦",label:"Other"};
+            return (<div key={k} style={{display:"flex",justifyContent:"space-between",gap:10,fontSize:13.5,padding:"3px 0"}}>
+              <span className="muted">{cat.icon} {cat.label}</span><span>{money(v,cur)}</span></div>);
+          })}
+        </div>}
       </div>}
 
       {/* cost rows */}
@@ -1940,11 +1976,18 @@ function Costs({trip,update,auth}){
         const who=((c.forWhom&&c.forWhom.length)?c.forWhom:travelers).filter(n=>travelers.includes(n));
         const share=(Number(c.amount)&&who.length)?Number(c.amount)/who.length:null;
         return (
-          <div className="card" key={c.id||i}>
+          <div className="card" key={c.id||i} data-costid={c.id||i}>
             <div className="cost-row">
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:16,fontWeight:600}}><Editable value={c.label} onChange={v=>patch(i,x=>x.label=v)} placeholder="What is this?"/></div>
+                <div className="cost-label" style={{fontSize:16,fontWeight:600,display:"flex",gap:7,alignItems:"baseline"}}>
+                  {catOf(c.cat) && <span style={{flexShrink:0}}>{catOf(c.cat).icon}</span>}
+                  <Editable value={c.label} onChange={v=>patch(i,x=>x.label=v)} placeholder="What was it? Taxi, hotel, dinner…"/>
+                </div>
                 <div className="cost-meta">
+                  {canEdit && <select className="mini-select" value={c.cat||""} onChange={e=>setCat(i,e.target.value)}>
+                    <option value="">Category…</option>
+                    {COST_CATS.map(x=><option key={x.k} value={x.k}>{x.icon} {x.label}</option>)}
+                  </select>}
                   <span>Paid by{" "}
                     {canEdit ? <select className="mini-select" value={c.paidBy||""} onChange={e=>patch(i,x=>x.paidBy=e.target.value)}>
                         <option value="">not yet</option>
