@@ -293,6 +293,13 @@
   .who-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--border);
     background:var(--card2);color:var(--muted);cursor:pointer;user-select:none;transition:.14s}
   .who-chip.on{background:rgba(120,187,255,.16);border-color:rgba(120,187,255,.45);color:#a9d1ff}
+  .paid-chip{font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--border);
+    background:var(--card2);color:var(--muted);cursor:pointer;font-family:inherit;transition:.14s;white-space:nowrap}
+  .paid-chip:hover:not(:disabled){border-color:var(--muted2);color:var(--text2)}
+  .paid-chip.me{background:rgba(120,187,255,.14);border-color:rgba(120,187,255,.42);color:#a9d1ff}
+  .paid-chip.on{background:rgba(84,201,138,.16);border-color:rgba(84,201,138,.45);color:#7ee0ac}
+  .paid-chip:disabled{cursor:default;opacity:.75}
+  .settled-tag{font-size:10.5px;font-weight:700;letter-spacing:.5px;color:#7ee0ac;margin-top:2px}
   .settle-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;flex-wrap:wrap}
   .settle-line{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border2);font-size:14px;flex-wrap:wrap}
   .settle-line:first-child{border-top:none}
@@ -1876,6 +1883,12 @@ function Costs({trip,update,auth}){
       const share=amt/who.length;
       who.forEach(n=>{ bal[n]-=share; per[n]+=share; });
       if(c.paidBy&&bal[c.paidBy]!==undefined) bal[c.paidBy]+=amt;
+      // anyone who has paid their share of THIS item back to whoever fronted it
+      (c.settledBy||[]).forEach(n=>{
+        if(n===c.paidBy||!who.includes(n)||bal[n]===undefined) return;
+        bal[n]+=share;
+        if(c.paidBy&&bal[c.paidBy]!==undefined) bal[c.paidBy]-=share;
+      });
     });
     // settle-up payments are transfers, not expenses: they move what's
     // outstanding between people without changing the trip total or shares
@@ -1890,6 +1903,21 @@ function Costs({trip,update,auth}){
   const settlements=useMemo(()=>settleUp(balances),[balances]);
   const anyAmounts=costs.some(c=>Number(c.amount)>0);
   const payments=trip.payments||[];
+  // which traveller is the person currently looking at this?
+  const meName=useMemo(()=>{
+    if(!(auth&&auth.user)) return null;
+    const fn=firstNameFrom(auth.user).toLowerCase();
+    const byFirst=travelers.find(t=>String(t).toLowerCase()===fn);
+    if(byFirst) return byFirst;
+    const local=String(auth.user.email||"").split("@")[0].toLowerCase();
+    return travelers.find(t=>local.includes(String(t).toLowerCase()))||null;
+  },[auth&&auth.user,travelers]);
+  const toggleSettled=(i,name)=>patch(i,x=>{
+    const list=Array.isArray(x.settledBy)?x.settledBy:[];
+    const at=list.indexOf(name);
+    if(at>=0) list.splice(at,1); else list.push(name);
+    x.settledBy=list;
+  });
   const markPaid=(s)=>update(t=>{ (t.payments=t.payments||[]).push({
     id:uid("p"),from:s.from,to:s.to,amount:Math.round(s.amount*100)/100,at:Date.now()}); return t;
   },"Payment recorded");
@@ -2006,6 +2034,8 @@ function Costs({trip,update,auth}){
       {costs.map((c,i)=>{
         const who=((c.forWhom&&c.forWhom.length)?c.forWhom:travelers).filter(n=>travelers.includes(n));
         const share=(Number(c.amount)&&who.length)?Number(c.amount)/who.length:null;
+        const owers=who.filter(n=>n!==c.paidBy);
+        const allSettled=owers.length>0 && owers.every(n=>(c.settledBy||[]).includes(n));
         return (
           <div className="card" key={c.id||i} data-costid={c.id||i}>
             <div className="cost-row">
@@ -2028,6 +2058,19 @@ function Costs({trip,update,auth}){
                   </span>
                   {share!=null && <span>· {money(share,cur)} each</span>}
                 </div>
+                {owers.length>0 && <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:9,alignItems:"center"}}>
+                  <span className="muted" style={{fontSize:11.5}}>Paid back:</span>
+                  {owers.map(n=>{
+                    const on=(c.settledBy||[]).includes(n);
+                    const isMe=n===meName;
+                    return <button key={n} className={"paid-chip"+(on?" on":"")+(isMe&&!on?" me":"")}
+                      disabled={!canEdit}
+                      title={on?"Tap to undo":(isMe?"Record that you paid your share of this":"Record that "+n+" paid their share of this")}
+                      onClick={()=>toggleSettled(i,n)}>
+                      {on ? `✓ ${isMe?"You":n} paid` : (isMe ? `I paid my share` : `Mark ${n} paid`)}
+                    </button>;
+                  })}
+                </div>}
                 {canEdit && travelers.length>0 && <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
                   <span className="muted" style={{fontSize:11.5,alignSelf:"center"}}>Split:</span>
                   {travelers.map(n=>{
@@ -2042,6 +2085,7 @@ function Costs({trip,update,auth}){
               </div>
               <div style={{textAlign:"right"}}>
                 <div className="cost-amt">{cur}<Editable value={c.amount==null?"":String(c.amount)} onChange={v=>patch(i,x=>x.amount=parseAmount(v))} placeholder="TBD"/></div>
+                {allSettled && <div className="settled-tag">✓ Settled</div>}
                 {canEdit && <button className="icon-btn" title="Delete cost" onClick={()=>update(t=>{t.costs.splice(i,1);return t;},"Cost deleted")}>🗑</button>}
               </div>
             </div>
