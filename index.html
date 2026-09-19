@@ -293,6 +293,7 @@
   .who-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--border);
     background:var(--card2);color:var(--muted);cursor:pointer;user-select:none;transition:.14s}
   .who-chip.on{background:rgba(120,187,255,.16);border-color:rgba(120,187,255,.45);color:#a9d1ff}
+  .settle-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;flex-wrap:wrap}
   .settle-line{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border2);font-size:14px;flex-wrap:wrap}
   .settle-line:first-child{border-top:none}
   .bal-pos{color:var(--good);font-weight:700}
@@ -1876,11 +1877,22 @@ function Costs({trip,update,auth}){
       who.forEach(n=>{ bal[n]-=share; per[n]+=share; });
       if(c.paidBy&&bal[c.paidBy]!==undefined) bal[c.paidBy]+=amt;
     });
+    // settle-up payments are transfers, not expenses: they move what's
+    // outstanding between people without changing the trip total or shares
+    (trip.payments||[]).forEach(p=>{
+      const amt=Number(p.amount); if(!amt||isNaN(amt)) return;
+      if(bal[p.from]!==undefined) bal[p.from]+=amt;
+      if(bal[p.to]!==undefined)   bal[p.to]  -=amt;
+    });
     return {total:tot,balances:bal,perPerson:per,byCat:cats};
-  },[costs,travelers]);
+  },[costs,travelers,trip.payments]);
 
   const settlements=useMemo(()=>settleUp(balances),[balances]);
   const anyAmounts=costs.some(c=>Number(c.amount)>0);
+  const payments=trip.payments||[];
+  const markPaid=(s)=>update(t=>{ (t.payments=t.payments||[]).push({
+    id:uid("p"),from:s.from,to:s.to,amount:Math.round(s.amount*100)/100,at:Date.now()}); return t;
+  },"Payment recorded");
 
   const setTravelers=(fn)=>update(t=>{ t.travelers=(t.travelers&&t.travelers.length)?t.travelers:travelers.slice(); fn(t.travelers); return t; });
   // renaming/removing a person keeps existing costs pointing at the right people
@@ -1959,7 +1971,26 @@ function Costs({trip,update,auth}){
         </div>}
         {settlements.length>0 && <div style={{marginTop:14}}>
           <div className="fl" style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:6}}>Settle up</div>
-          {settlements.map((s,i)=><div key={i} style={{fontSize:14,padding:"3px 0"}}>💸 <b>{s.from}</b> pays <b>{s.to}</b> <span className="bal-pos">{money(s.amount,cur)}</span></div>)}
+          {settlements.map((s,i)=>(
+            <div className="settle-row" key={i}>
+              <span style={{fontSize:14}}>💸 <b>{s.from}</b> pays <b>{s.to}</b> <span className="bal-pos">{money(s.amount,cur)}</span></span>
+              {canEdit && <button className="btn sm" onClick={()=>markPaid(s)}>Mark paid</button>}
+            </div>
+          ))}
+        </div>}
+        {anyAmounts && settlements.length===0 && <div style={{marginTop:14,fontSize:14}}>✅ Everyone's square, nothing outstanding.</div>}
+
+        {payments.length>0 && <div style={{marginTop:16}}>
+          <div className="fl" style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:6}}>Payments made</div>
+          {payments.map((p,i)=>(
+            <div className="settle-line" key={p.id||i}>
+              <span style={{fontSize:14}}>✅ <b>{p.from}</b> paid <b>{p.to}</b></span>
+              <span style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontWeight:600}}>{cur}<Editable value={p.amount==null?"":String(p.amount)} onChange={v=>update(t=>{t.payments[i].amount=parseAmount(v);return t;})} placeholder="0"/></span>
+                {canEdit && <button className="icon-btn" title="Remove this payment" onClick={()=>update(t=>{t.payments.splice(i,1);return t;},"Payment removed")}>🗑</button>}
+              </span>
+            </div>
+          ))}
         </div>}
         {Object.keys(byCat).length>1 && <div style={{marginTop:14}}>
           <div className="fl" style={{fontSize:10.5,color:"var(--muted)",textTransform:"uppercase",letterSpacing:".6px",fontWeight:600,marginBottom:6}}>Where it went</div>
