@@ -288,6 +288,17 @@
   .cost-row{display:flex;gap:16px;align-items:flex-start}
   .cost-amt{font-family:'Playfair Display',serif;font-size:23px;font-weight:700;white-space:nowrap}
   .cost-meta{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:6px;font-size:12.5px;color:var(--muted)}
+  /* Real form fields. iOS Safari won't drop a caret into an empty
+     contenteditable (the placeholder is a CSS ::before, not text), so every
+     field you fill in on a brand new row is a proper <input>. */
+  .cell-input{background:transparent;border:1px solid transparent;border-radius:8px;color:inherit;font:inherit;
+    padding:4px 6px;margin:-4px -6px;width:100%;min-width:0;outline:none;-webkit-appearance:none}
+  .cell-input::placeholder{color:var(--muted2);font-style:italic}
+  .cell-input:focus{background:rgba(120,187,255,.12);border-color:rgba(120,187,255,.4)}
+  .cell-input.boxed{background:var(--bg2);border-color:var(--border);width:132px;padding:5px 10px;margin:0;font-size:13px}
+  .cost-label .cell-input{flex:1}
+  .cost-amt{display:flex;justify-content:flex-end;align-items:baseline}
+  .cost-amt .cell-input{text-align:right;margin-right:-6px}
   .mini-select{background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:3px 7px;font-size:12.5px}
   .mini-select:focus{outline:none;border-color:var(--accent)}
   .who-chip{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--border);
@@ -1219,8 +1230,29 @@ function Editable({value,onChange,placeholder="",className="",multiline=false,ta
   const commit=()=>{ const t=ref.current.innerText.replace(/\n+$/,""); if(t!==(value||"")) onChange(t); };
   useEffect(()=>{ if(canEdit&&ref.current&&ref.current.innerText!==(value||"")) ref.current.innerText=value||""; },[value,canEdit]);
   if(!canEdit) return <Tag className={`ed-ro ${className}`}>{value||""}</Tag>;
+  // an empty field has no text node to tap, and iOS then refuses to focus it
   return <Tag ref={ref} className={`ed ${!value?"empty":""} ${className}`} data-ph={placeholder} contentEditable suppressContentEditableWarning
+    onPointerUp={(e)=>{ if(!value) e.currentTarget.focus(); }}
     onBlur={commit} onKeyDown={(e)=>{ if(!multiline&&e.key==="Enter"){e.preventDefault();e.target.blur();} }}>{value||""}</Tag>;
+}
+/* A plain <input> for fields that start out empty. Contenteditable is fine once
+   there's text in it, but on a phone you can't get the first character in. */
+function InputCell({value,onCommit,placeholder="",className="",numeric=false,autoFocus=false,autoSize=false}){
+  const canEdit=React.useContext(CanEdit);
+  const asText=(v)=>v==null?"":String(v);
+  const [draft,setDraft]=useState(()=>asText(value));
+  const editing=useRef(false);
+  // don't clobber what someone is typing when a sync lands mid-edit
+  useEffect(()=>{ if(!editing.current) setDraft(asText(value)); },[value]);
+  if(!canEdit) return <span className={`ed-ro ${className}`}>{asText(value)}</span>;
+  const commit=()=>{ editing.current=false; if(draft!==asText(value)) onCommit(draft); };
+  // an amount sized to its digits keeps the currency symbol next to the number
+  const size=autoSize?{width:`calc(${Math.max(4,(draft||placeholder||"").length)}ch + 14px)`,maxWidth:"42vw"}:undefined;
+  return <input className={`cell-input ${className}`} value={draft} placeholder={placeholder} style={size}
+    type="text" inputMode={numeric?"decimal":undefined} enterKeyHint="done" autoFocus={autoFocus}
+    autoComplete="off" autoCorrect="off" spellCheck={!numeric}
+    onFocus={()=>{editing.current=true;}} onChange={(e)=>setDraft(e.target.value)} onBlur={commit}
+    onKeyDown={(e)=>{ if(e.key==="Enter"){ e.preventDefault(); e.currentTarget.blur(); } }}/>;
 }
 
 /* ============ APP ============ */
@@ -1940,6 +1972,11 @@ function Costs({trip,update,auth}){
       if(Array.isArray(c.forWhom)) c.forWhom=c.forWhom.filter(x=>x!==old); });
     return t;
   },"Person removed");
+  const [addingPerson,setAddingPerson]=useState(false);
+  const [newPerson,setNewPerson]=useState("");
+  // prompt() is unreliable in an installed iOS web app, so add people inline
+  const addPerson=(v)=>{ const n=String(v||"").trim(); setNewPerson("");
+    if(n) setTravelers(a=>{ if(!a.includes(n)) a.push(n); }); };
   const [focusId,setFocusId]=useState(null);
   const addCost=()=>{ const id=uid("c");
     update(t=>{ (t.costs=t.costs||[]).push({id,label:"",amount:null,paidBy:"",forWhom:[],cat:""}); return t; });
@@ -1951,10 +1988,9 @@ function Costs({trip,update,auth}){
     if(k && def && !String(x.label||"").trim()) x.label=def; });
   // drop the cursor straight into the new expense's name
   useEffect(()=>{ if(!focusId) return;
-    const el=document.querySelector('[data-costid="'+focusId+'"] .cost-label .ed');
+    const el=document.querySelector('[data-costid="'+focusId+'"] .cost-label input');
     if(el){ el.focus();
-      try{ const r=document.createRange(); r.selectNodeContents(el); r.collapse(false);
-        const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(e){}
+      try{ el.setSelectionRange(el.value.length,el.value.length); }catch(e){}
       el.scrollIntoView({block:"center",behavior:"smooth"}); }
     setFocusId(null);
   },[focusId,costs.length]);
@@ -1975,7 +2011,16 @@ function Costs({trip,update,auth}){
             </span>
           ))}
           {travelers.length===0 && <span className="muted small">Add the people sharing costs.</span>}
-          {canEdit && <button className="btn ghost sm" onClick={()=>{ const n=prompt("Name:"); if(n&&n.trim()) setTravelers(a=>{ if(!a.includes(n.trim())) a.push(n.trim()); }); }}>+ Add person</button>}
+          {canEdit && (addingPerson
+            ? <span style={{display:"inline-flex",gap:6,alignItems:"center"}}>
+                <input className="cell-input boxed" value={newPerson} placeholder="Name" autoFocus
+                  type="text" enterKeyHint="done" autoComplete="off"
+                  onChange={e=>setNewPerson(e.target.value)}
+                  onKeyDown={e=>{ if(e.key==="Enter"){e.preventDefault();addPerson(newPerson);}
+                    if(e.key==="Escape"){setNewPerson("");setAddingPerson(false);} }}/>
+                <button className="btn ghost sm" onClick={()=>{addPerson(newPerson);setAddingPerson(false);}}>Add</button>
+              </span>
+            : <button className="btn ghost sm" onClick={()=>{setNewPerson("");setAddingPerson(true);}}>+ Add person</button>)}
           <span style={{marginLeft:"auto"}} className="muted small">Currency <Editable value={cur} onChange={v=>update(t=>{t.costCurrency=v||"$";return t;})} placeholder="$"/></span>
         </div>
       </div>
@@ -2014,7 +2059,7 @@ function Costs({trip,update,auth}){
             <div className="settle-line" key={p.id||i}>
               <span style={{fontSize:14}}>✅ <b>{p.from}</b> paid <b>{p.to}</b></span>
               <span style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{fontWeight:600}}>{cur}<Editable value={p.amount==null?"":String(p.amount)} onChange={v=>update(t=>{t.payments[i].amount=parseAmount(v);return t;})} placeholder="0"/></span>
+                <span style={{fontWeight:600}}>{cur}<InputCell className="boxed" value={p.amount==null?"":String(p.amount)} onCommit={v=>update(t=>{t.payments[i].amount=parseAmount(v);return t;})} placeholder="0" numeric/></span>
                 {canEdit && <button className="icon-btn" title="Remove this payment" onClick={()=>update(t=>{t.payments.splice(i,1);return t;},"Payment removed")}>🗑</button>}
               </span>
             </div>
@@ -2042,7 +2087,7 @@ function Costs({trip,update,auth}){
               <div style={{flex:1,minWidth:0}}>
                 <div className="cost-label" style={{fontSize:16,fontWeight:600,display:"flex",gap:7,alignItems:"baseline"}}>
                   {catOf(c.cat) && <span style={{flexShrink:0}}>{catOf(c.cat).icon}</span>}
-                  <Editable value={c.label} onChange={v=>patch(i,x=>x.label=v)} placeholder="What was it? Taxi, hotel, dinner…"/>
+                  <InputCell value={c.label} onCommit={v=>patch(i,x=>x.label=v)} placeholder="What was it? Taxi, hotel, dinner…"/>
                 </div>
                 <div className="cost-meta">
                   {canEdit && <select className="mini-select" value={c.cat||""} onChange={e=>setCat(i,e.target.value)}>
@@ -2056,7 +2101,7 @@ function Costs({trip,update,auth}){
                       </select>
                       : <b>{c.paidBy||"not yet"}</b>}
                   </span>
-                  {share!=null && <span>· {money(share,cur)} each</span>}
+                  {share!=null && <span>{money(share,cur)} each</span>}
                 </div>
                 {owers.length>0 && <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:9,alignItems:"center"}}>
                   <span className="muted" style={{fontSize:11.5}}>Paid back:</span>
@@ -2084,7 +2129,7 @@ function Costs({trip,update,auth}){
                 </div>}
               </div>
               <div style={{textAlign:"right"}}>
-                <div className="cost-amt">{cur}<Editable value={c.amount==null?"":String(c.amount)} onChange={v=>patch(i,x=>x.amount=parseAmount(v))} placeholder="TBD"/></div>
+                <div className="cost-amt">{cur}<InputCell value={c.amount==null?"":String(c.amount)} onCommit={v=>patch(i,x=>x.amount=parseAmount(v))} placeholder="TBD" numeric autoSize/></div>
                 {allSettled && <div className="settled-tag">✓ Settled</div>}
                 {canEdit && <button className="icon-btn" title="Delete cost" onClick={()=>update(t=>{t.costs.splice(i,1);return t;},"Cost deleted")}>🗑</button>}
               </div>
