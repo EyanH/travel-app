@@ -1,0 +1,484 @@
+{
+  "slug": "banff-2026",
+  "country": "Canada",
+  "archived": false,
+  "heroImage": "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=1600&q=80",
+  "meta": {
+    "tripName": "Banff",
+    "subtitle": "Toronto → Calgary → Banff → Home",
+    "startDate": "2026-12-21",
+    "endDate": "2026-12-25",
+    "stats": [
+      {
+        "n": "5",
+        "l": "days"
+      },
+      {
+        "n": "4",
+        "l": "nights"
+      },
+      {
+        "n": "2",
+        "l": "flights"
+      },
+      {
+        "n": "0",
+        "l": "cars"
+      }
+    ]
+  },
+  "days": [
+    {
+      "id": "d1",
+      "date": "Mon, Dec 21",
+      "day": "Day 1",
+      "title": "Toronto → Banff",
+      "location": "Travel Day",
+      "type": "travel",
+      "emoji": "✈️",
+      "details": [
+        {
+          "time": "4:15 AM",
+          "text": "Uber to Pearson",
+          "sub": "~$60. GO buses don't run this early"
+        },
+        {
+          "time": "6:15 AM",
+          "text": "Air Canada YYZ → YYC",
+          "sub": "Nonstop, 4h 29m, lands 9:44 AM. $1,620.82 for two, round trip"
+        },
+        {
+          "time": "10:30 AM",
+          "text": "Shuttle to Banff Caribou Lodge",
+          "sub": "$177.80 for two, ~2 hrs"
+        },
+        {
+          "time": "12:30 PM",
+          "text": "Check in at Banff Caribou Lodge",
+          "sub": "Drop bags if room isn't ready. Buy Parks Canada pass ($98 for two, 4 daily passes)"
+        },
+        {
+          "time": "1:00 PM",
+          "text": "Lunch on Banff Avenue",
+          "sub": "~$60. Use the $15 daily food credit"
+        },
+        {
+          "time": "2:30 PM",
+          "text": "Wander Banff Avenue",
+          "sub": "Free. Christmas lights are up"
+        },
+        {
+          "time": "6:30 PM",
+          "text": "Dinner in Banff",
+          "sub": "~$100. Early night after the 4 AM start"
+        }
+      ],
+      "tips": "You gain two hours flying west. Sunset is around 4:30 PM, so the afternoon is short.",
+      "accommodation": "Banff Caribou Lodge & Spa",
+      "suggestions": []
+    },
+    {
+      "id": "d2",
+      "date": "Tue, Dec 22",
+      "day": "Day 2",
+      "title": "Lake Louise",
+      "location": "Lake Louise, Alberta",
+      "type": "explore",
+      "emoji": "⛸️",
+      "details": [
+        {
+          "time": "9:00 AM",
+          "text": "Roam 8X to Lake Louise",
+          "sub": "~$40 for two, round trip. About 45 min"
+        },
+        {
+          "time": "10:00 AM",
+          "text": "Skate on frozen Lake Louise",
+          "sub": "Free. Skate rental ~$50. Confirm the rink is open"
+        },
+        {
+          "time": "12:30 PM",
+          "text": "Lunch at Fairmont Chateau Lake Louise",
+          "sub": "~$120 for two"
+        },
+        {
+          "time": "1:45 PM",
+          "text": "Lakeshore walk",
+          "sub": "Free. Flat trail, back before dark"
+        },
+        {
+          "time": "4:00 PM",
+          "text": "Bus back, dinner in Banff",
+          "sub": "~$100"
+        }
+      ],
+      "tips": "Ice usually ready by late December but not guaranteed. Check the Chateau's rink status the week before.",
+      "accommodation": "Banff Caribou Lodge & Spa",
+      "suggestions": []
+    },
+    {
+      "id": "d3",
+      "date": "Wed, Dec 23",
+      "day": "Day 3",
+      "title": "Johnston Canyon, Gondola & Hot Springs",
+      "location": "Banff, Alberta",
+      "type": "trek",
+      "emoji": "🏔️",
+      "details": [
+        {
+          "time": "9:00 AM",
+          "text": "Johnston Canyon guided ice walk",
+          "sub": "~$200 for two. Weekday, so a tour with pickup is needed (bus is weekends only)"
+        },
+        {
+          "time": "1:00 PM",
+          "text": "Back to Banff, downtime",
+          "sub": "Free"
+        },
+        {
+          "time": "3:00 PM",
+          "text": "Banff Gondola, Sulphur Mountain",
+          "sub": "~$160 for two. Roam Route 1 up. Sunset ~4:30"
+        },
+        {
+          "time": "5:00 PM",
+          "text": "Banff Upper Hot Springs",
+          "sub": "~$40 for two ($19.75 pp). Right next to the gondola"
+        },
+        {
+          "time": "7:00 PM",
+          "text": "Dinner on Banff Avenue",
+          "sub": "~$100"
+        }
+      ],
+      "tips": "Wear ice cleats for the canyon. Don't walk up to the gondola or hot springs in winter, take Route 1.",
+      "accommodation": "Banff Caribou Lodge & Spa",
+      "suggestions": []
+    },
+    {
+      "id": "d4",
+      "date": "Thu, Dec 24",
+      "day": "Day 4",
+      "title": "Christmas Eve in Banff",
+      "location": "Banff, Alberta",
+      "type": "flex",
+      "emoji": "🎄",
+      "details": [
+        {
+          "time": "9:00 AM",
+          "text": "Sleep in",
+          "sub": "Free. Slow breakfast"
+        },
+        {
+          "time": "10:30 AM",
+          "text": "Bow Falls walk",
+          "sub": "Free. Short walk from downtown"
+        },
+        {
+          "time": "12:00 PM",
+          "text": "Lunch at Fairmont Banff Springs",
+          "sub": "~$100 for two. Decked out for Christmas"
+        },
+        {
+          "time": "2:30 PM",
+          "text": "Vermilion Lakes walk",
+          "sub": "Free. Back before 4:30 dark"
+        },
+        {
+          "time": "7:00 PM",
+          "text": "Christmas Eve dinner",
+          "sub": "~$250 for two. Book now"
+        }
+      ],
+      "tips": "Restaurants run holiday menus and fill up. Lock in Christmas Eve dinner early.",
+      "accommodation": "Banff Caribou Lodge & Spa",
+      "suggestions": [
+        "Snow tubing at Mt Norquay",
+        "Spa at the Caribou Lodge"
+      ]
+    },
+    {
+      "id": "d5",
+      "date": "Fri, Dec 25",
+      "day": "Day 5",
+      "title": "Banff → Toronto",
+      "location": "Travel Day",
+      "type": "travel",
+      "emoji": "🏠",
+      "details": [
+        {
+          "time": "8:30 AM",
+          "text": "Breakfast, check out",
+          "sub": "~$40. Food credit helps"
+        },
+        {
+          "time": "10:30 AM",
+          "text": "Shuttle to Calgary airport",
+          "sub": "$177.80 for two. Must be 10:30, not 15:30"
+        },
+        {
+          "time": "12:45 PM",
+          "text": "Lunch at YYC",
+          "sub": "~$40"
+        },
+        {
+          "time": "2:25 PM",
+          "text": "Air Canada YYC → YYZ",
+          "sub": "Nonstop, 3h 51m, lands 7:16 PM"
+        },
+        {
+          "time": "7:30 PM",
+          "text": "Uber home",
+          "sub": "~$60 on Christmas night"
+        }
+      ],
+      "tips": "Confirm the shuttle's Christmas Day schedule. Holiday service is reduced.",
+      "accommodation": null,
+      "suggestions": []
+    }
+  ],
+  "flights": [
+    {
+      "id": "f1",
+      "date": "Mon, Dec 21",
+      "airline": "Air Canada",
+      "route": "YYZ → YYC",
+      "flight": "TBD",
+      "depart": "6:15 AM YYZ",
+      "arrive": "9:44 AM YYC",
+      "duration": "4h 29m",
+      "stop": "Nonstop",
+      "cost": "$1,620.82 CAD (roundtrip, 2 adults, Economy Standard)",
+      "confirmation": "TBD after booking"
+    },
+    {
+      "id": "f2",
+      "date": "Fri, Dec 25",
+      "airline": "Air Canada",
+      "route": "YYC → YYZ",
+      "flight": "TBD",
+      "depart": "2:25 PM YYC",
+      "arrive": "7:16 PM YYZ",
+      "duration": "3h 51m",
+      "stop": "Nonstop",
+      "cost": "included in roundtrip",
+      "confirmation": "TBD after booking"
+    }
+  ],
+  "flnotes": "Economy Standard includes a carry-on. Free cancellation within 24 hours of purchase.",
+  "packing": {
+    "clothing": [
+      "Insulated winter jacket",
+      "Thermal base layers (top and bottom)",
+      "Fleece or warm mid-layer",
+      "Waterproof winter boots with grip",
+      "Warm hat, gloves, scarf or neck gaiter",
+      "Wool socks (5+ pairs)",
+      "Swimsuit (hot springs and hotel spa)",
+      "One nicer outfit for Christmas Eve dinner"
+    ],
+    "tech": [
+      "Phone charger and cable",
+      "Power bank (cold drains batteries fast)",
+      "Headphones"
+    ],
+    "docs": [
+      "Photo ID",
+      "Flight confirmations",
+      "Hotel and shuttle confirmations",
+      "Parks Canada pass (on phone)",
+      "Johnston Canyon tour booking",
+      "Christmas Eve dinner reservation"
+    ],
+    "misc": [
+      "Ice cleats (or rent for Johnston Canyon)",
+      "Lip balm and moisturizer (dry mountain air)",
+      "Sunglasses (snow glare)",
+      "Reusable water bottle",
+      "Small day backpack"
+    ]
+  },
+  "checked": {},
+  "quests": [
+    {
+      "id": "q1",
+      "text": "Skate on frozen Lake Louise",
+      "category": "activity",
+      "done": false,
+      "city": "lake louise"
+    },
+    {
+      "id": "q2",
+      "text": "Walk the frozen falls in Johnston Canyon",
+      "category": "adventure",
+      "done": false,
+      "city": "banff"
+    },
+    {
+      "id": "q3",
+      "text": "Sunset from the top of Sulphur Mountain",
+      "category": "adventure",
+      "done": false,
+      "city": "banff"
+    },
+    {
+      "id": "q4",
+      "text": "Soak in the Upper Hot Springs after dark",
+      "category": "cultural",
+      "done": false,
+      "city": "banff"
+    },
+    {
+      "id": "q5",
+      "text": "Spot elk wandering through town",
+      "category": "adventure",
+      "done": false,
+      "city": "banff"
+    },
+    {
+      "id": "q6",
+      "text": "Lunch at the Fairmont Banff Springs",
+      "category": "food",
+      "done": false,
+      "city": "banff"
+    },
+    {
+      "id": "q7",
+      "text": "Christmas Eve dinner on Banff Avenue",
+      "category": "food",
+      "done": false,
+      "city": "banff"
+    },
+    {
+      "id": "q8",
+      "text": "See Bow Falls in winter",
+      "category": "cultural",
+      "done": false,
+      "city": "banff"
+    }
+  ],
+  "hotelCoords": {
+    "banff": {
+      "lat": 51.184,
+      "lon": -115.562,
+      "name": "Banff Caribou Lodge & Spa"
+    }
+  },
+  "cityCoords": {
+    "banff": {
+      "lat": 51.1784,
+      "lon": -115.5708
+    },
+    "lake louise": {
+      "lat": 51.4254,
+      "lon": -116.1773
+    },
+    "johnston canyon": {
+      "lat": 51.2453,
+      "lon": -115.8399
+    },
+    "sulphur mountain": {
+      "lat": 51.1489,
+      "lon": -115.5612
+    },
+    "calgary": {
+      "lat": 51.0447,
+      "lon": -114.0719
+    },
+    "toronto": {
+      "lat": 43.6532,
+      "lon": -79.3832
+    }
+  },
+  "info": [
+    {
+      "title": "💱 Currency",
+      "content": "Canadian Dollar (CAD) · Home currency\n\nCards accepted almost everywhere."
+    },
+    {
+      "title": "🎫 Parks Canada pass",
+      "content": "Required for everyone staying in Banff National Park, car or not. $12.25 per adult per day, valid until 4 PM the next day. Four daily passes ($98 for two) cover Dec 21 to 25. One pass covers every spot in the park; the hot springs and gondola charge separately."
+    },
+    {
+      "title": "🚌 Getting around (Roam Transit)",
+      "content": "Roam Transit runs from Banff Ave. Route 8X to Lake Louise ($10 pp each way). Route 1 to the gondola and hot springs. Route 9 to Johnston Canyon runs weekends and stat holidays only in winter."
+    },
+    {
+      "title": "🌡 Weather to expect",
+      "content": "Days: -5 to -15 C, colder with wind chill\nDaylight: Sunrise ~8:30 AM, sunset ~4:30 PM"
+    },
+    {
+      "title": "🎄 Holiday notes",
+      "content": "Dec 24 and 25 have reduced transit and shuttle schedules, and restaurants run holiday menus. Book dinners and confirm shuttle times ahead."
+    },
+    {
+      "title": "🏨 Hotel perks",
+      "content": "Caribou Lodge rate includes a $15 food and beverage credit per room per day. Fully refundable until Dec 18."
+    }
+  ],
+  "bookings": [
+    {
+      "id": "b1",
+      "type": "flight",
+      "vendor": "Air Canada",
+      "status": "not_booked",
+      "cost": "$1,620.82 for two",
+      "notes": "Dec 21 6:15 AM out, Dec 25 2:25 PM back. Mark booked once paid."
+    },
+    {
+      "id": "b2",
+      "type": "hotel",
+      "vendor": "Banff Caribou Lodge & Spa",
+      "status": "not_booked",
+      "cost": "$1,261 total, 4 nights",
+      "notes": "Standard Room, 2 Queen Beds. Refundable until Dec 18."
+    },
+    {
+      "id": "b3",
+      "type": "transport",
+      "vendor": "YYC ↔ Banff shuttle",
+      "status": "not_booked",
+      "cost": "$355.59 for two, round trip",
+      "notes": "Return must be the 10:30 departure from Banff, not 15:30."
+    },
+    {
+      "id": "b4",
+      "type": "park",
+      "vendor": "Parks Canada daily passes",
+      "status": "not_booked",
+      "cost": "$98 for two",
+      "notes": "Buy online, keep on phone. Dec 21 to 24."
+    },
+    {
+      "id": "b5",
+      "type": "tour",
+      "vendor": "Johnston Canyon guided ice walk",
+      "status": "not_booked",
+      "cost": "~$200 for two",
+      "notes": "Dec 23 morning, hotel pickup."
+    },
+    {
+      "id": "b6",
+      "type": "dining",
+      "vendor": "Christmas Eve dinner",
+      "status": "not_booked",
+      "cost": "~$250 for two",
+      "notes": "Book now, holiday menus fill up."
+    }
+  ],
+  "budget_estimate": {
+    "per_person_cad": {
+      "flight": 810,
+      "accommodation": 630,
+      "airport_shuttle": 178,
+      "parks_pass": 49,
+      "activities": 300,
+      "food": 480,
+      "transport_local": 90,
+      "tips_misc": 0,
+      "total_low": 2300,
+      "total_mid": 2535,
+      "total_high": 2800
+    }
+  }
+}
