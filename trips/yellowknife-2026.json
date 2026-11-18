@@ -11,15 +11,15 @@
       {"n": "8", "l": "days"},
       {"n": "3", "l": "friends"},
       {"n": "7", "l": "aurora nights"},
-      {"n": "2", "l": "flights"}
+      {"n": "2", "l": "FLIGHTS"}
     ]
   },
   "days": [
     {"id":"d1","date":"Sat, Nov 21","day":"Day 1","title":"Fly to Yellowknife","location":"Toronto → Yellowknife","type":"travel","emoji":"✈️","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Bullocks Bistro (Old Town)","Grab room snacks"],"tips":"Late Nov: ~6h daylight, highs near -15°C, lows -25 to -30°C. Cover all skin. Keep phone/camera batteries warm.","details":[
       {"time":"10:00 AM","text":"Depart Toronto (YYZ) · AC107 to Vancouver","sub":"Long travel day, charge everything"},
       {"time":"1:23 PM","text":"Connect at Vancouver (YVR)","sub":"1h22m layover, grab food"},
-      {"time":"5:19 PM","text":"Land Yellowknife (YZF)","sub":"Dark and very cold, parkas on before you step out"},
-      {"time":"~6:00 PM","text":"Check in · Explorer Hotel","sub":"Conf 593403594, due on arrival C$2,151.66 (~C$717 each)"},
+      {"time":"6:19 PM","text":"Land Yellowknife (YZF)","sub":"Dark and very cold, parkas on before you step out"},
+      {"time":"~7:00 PM","text":"Check in · Explorer Hotel","sub":"Conf 593403594, due on arrival C$2,151.66 (~C$717 each)"},
       {"time":"Evening","text":"First aurora watch if clear","sub":"Ease into the cold, just past town lights"}
     ]},
     {"id":"d2","date":"Sun, Nov 22","day":"Day 2","title":"Dogsledding + Aurora","location":"Yellowknife","type":"trek","emoji":"🛷","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Aurora Village (heated teepees)","Book a tour with hotel pickup"],"tips":"Operators supply outer gear but wear your own base layers. Hand and foot warmers are gold.","details":[
@@ -47,24 +47,24 @@
       {"time":"Afternoon","text":"Prince of Wales Northern Heritage Centre","sub":"Free, warm, great NWT + Indigenous history"},
       {"time":"Evening","text":"Aurora (chase the clearest night)"}
     ]},
-    {"id":"d7","date":"Fri, Nov 27","day":"Day 7","title":"Old Town + Final Aurora","location":"Yellowknife","type":"explore","emoji":"🌌","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Bullocks Bistro","Local art / souvenirs"],"tips":"Last full night, give the aurora your best shot, dress warmest and stay out late if clear.","details":[
+    {"id":"d7","date":"Fri, Nov 27","day":"Day 7","title":"Old Town + Final Aurora","location":"Yellowknife","type":"explore","emoji":"🌌","accommodation":"Explorer Hotel (Deluxe Family Room)","suggestions":["Bullocks Bistro","Local art / souvenirs"],"tips":"Last full night, but the airport run is 3:30 AM. Pack before dinner, then either call it by ~11 PM or stay up and sleep on the plane.","details":[
       {"time":"Daytime","text":"Old Town + lakeshore","sub":"Frozen-in houseboats, Ragged Ass Road, Bush Pilots' Monument"},
       {"time":"Dinner","text":"Bullocks Bistro","sub":"Iconic fish shack, arrive early, cash friendly"},
-      {"time":"Evening","text":"Last big aurora push"}
+      {"time":"Evening","text":"Last big aurora push","sub":"Bags packed and by the door first"}
     ]},
-    {"id":"d8","date":"Sat, Nov 28","day":"Day 8","title":"Fly Home (red-eye)","location":"Yellowknife → Toronto","type":"travel","emoji":"🏠","accommodation":null,"suggestions":[],"tips":"Return is overnight, keep a warm layer handy, you land early Sunday.","details":[
-      {"time":"Morning","text":"Slow morning, pack, late checkout if possible"},
-      {"time":"Afternoon","text":"Last town wander / warm cafe"},
-      {"time":"~4:15 PM","text":"Head to YZF airport","sub":"Small airport, still arrive ~90 min early"},
-      {"time":"6:10 PM","text":"Depart YZF · AC1198 to Edmonton","sub":"4h05m layover in Edmonton"},
-      {"time":"1:20 AM +1","text":"AC176 Edmonton → Toronto","sub":"Arrive YYZ 6:07 AM Sun Nov 29, sleep on the plane"}
+    {"id":"d8","date":"Sat, Nov 28","day":"Day 8","title":"Fly Home","location":"Yellowknife → Toronto","type":"travel","emoji":"🏠","accommodation":null,"suggestions":[],"tips":"Very early start: check out the night before if the desk allows, set two alarms. You land in Toronto Saturday afternoon.","details":[
+      {"time":"3:30 AM","text":"Head to the Airport","sub":"Book a cab the night before"},
+      {"time":"6:05 AM","text":"Depart Yellowknife (YZF) · AC253 to Vancouver"},
+      {"time":"7:58 AM","text":"Land in Vancouver (YVR)","sub":"1h32m layover"},
+      {"time":"9:30 AM","text":"Depart YVR · AC34 to Toronto"},
+      {"time":"3:57 PM","text":"Land in Toronto","sub":"Pearson Terminal 1"}
     ]}
   ],
   "flights": [
-    {"id":"f1","route":"YYZ → YVR → YZF","date":"Sat, Nov 21","airline":"Air Canada","flight":"AC 107 + AC 254","depart":"10:00 AM YYZ","arrive":"5:19 PM YZF","duration":"9h 19m","stop":"1h 22m in Vancouver (YVR)","cost":"","confirmation":"CHZCWJ"},
-    {"id":"f2","route":"YZF → YEG → YYZ","date":"Sat, Nov 28","airline":"Air Canada","flight":"AC 1198 + AC 176","depart":"6:10 PM YZF","arrive":"6:07 AM YYZ (Sun Nov 29)","duration":"9h 57m","stop":"4h 5m in Edmonton (YEG)","cost":"","confirmation":"CHZCWJ"}
+    {"id":"f1","route":"YYZ → YVR → YZF","date":"Sat, Nov 21","airline":"Air Canada","flight":"AC 107 + AC 254","depart":"10:00 AM YYZ","arrive":"6:19 PM YZF","duration":"10h 19m","stop":"1h 22m in Vancouver (YVR)","cost":"","confirmation":"CHZCWJ"},
+    {"id":"f2","route":"YZF → YVR → YYZ","date":"Sat, Nov 28","airline":"Air Canada","flight":"AC 253 + AC 34","depart":"6:05 AM YZF","arrive":"3:57 PM YYZ","duration":"7h 52m","stop":"1h 32m in Vancouver (YVR)","cost":"","confirmation":"CHZCWJ"}
   ],
-  "flnotes": "Booking reference CHZCWJ · 3 adults · all Economy.\nOut Sat Nov 21: AC107 YYZ 10:00 → YVR 13:23, 1h22m layover, AC254 YVR 14:45 → YZF 17:19.\nReturn (red-eye) Sat Nov 28: AC1198 YZF 18:10 → YEG 21:15, 4h05m layover, AC176 YEG 01:20 → YYZ 06:07 (Sun Nov 29).",
+  "flnotes": "Booking reference CHZCWJ · 3 adults · all Economy (Basic fare).\nOut Sat Nov 21: AC107 YYZ T1 10:00 → YVR 13:23 (A321), 1h22m layover, AC254 YVR 14:45 → YZF 18:19 (A220).\nReturn Sat Nov 28: AC253 YZF 06:05 → YVR 07:58 (A220), 1h32m layover, AC34 YVR 09:30 → YYZ T1 15:57 (777).\nAll times local. Basic fare, so check the bag allowance before packing bulky winter gear.",
   "packing": {
     "Warm Layers": ["Insulated parka (rated to -30°C)","Thermal base layers, top & bottom (x2)","Fleece or wool mid-layer","Insulated snow pants","Wool sweater","Thick wool socks (x5)"],
     "Extremities": ["Insulated waterproof winter boots","Warm toque","Balaclava or neck gaiter","Insulated mittens + thin liner gloves","Hand & foot warmers (lots)","Goggles or sunglasses"],
