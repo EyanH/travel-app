@@ -1287,7 +1287,8 @@ function ImportView({slug,auth,go}){
     if(!(fb&&fb.db)){ setErr("Sync is not available."); return; }
     setErr("");
     try{
-      const res=await fetch(`trips/${encodeURIComponent(slug)}.json`,{cache:"no-store"});
+      // unique URL so no cache (including an older service worker) can answer with a stale copy
+      const res=await fetch(`trips/${encodeURIComponent(slug)}.json?v=${Date.now()}`,{cache:"no-store"});
       if(!res.ok) throw new Error(`Couldn't find trips/${slug}.json (${res.status}).`);
       const data=await res.json();
       data.slug=slug; if(data.archived==null) data.archived=false; data.createdAt=data.createdAt||Date.now();
