@@ -15,7 +15,11 @@ After deploy: `https://<your-username>.github.io/<repo-name>/`
 - Per-trip detail: itinerary, flights, packing, quests, info
 - Everything editable in place, saved automatically
 - Live sync via Firebase Firestore (project `travel-app-277ca`), localStorage fallback
-- Live weather per city via Open-Meteo (no key)
+- Live weather via Open-Meteo (no key): a per-day trip forecast with 10pm to 2am cloud cover once a trip is within 16 days
+- Today view while a trip is on: what's next, with a countdown
+- Add to calendar: download the itinerary as an .ics file
+- Map and directions links for each day's city, the hotel and suggested places; live status links for flights
+- Safe imports: `/?import=<slug>` compares `trips/<slug>.json` with the live trip and only applies the changes you tick
 - Auto country flag + hero image when a trip does not specify one
 - Handles both the new trip schema and the original Peru data shape
 

@@ -272,6 +272,11 @@
   .field input:focus{outline:none;border-color:var(--accent)}
   .field .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
   .err{color:var(--bad);font-size:13px;margin-top:6px}
+  .imp-row{display:flex;gap:12px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--border2);cursor:pointer}
+  .imp-row:last-child{border-bottom:0}
+  .imp-row input{margin-top:4px;accent-color:var(--accent);width:16px;height:16px;flex:0 0 auto}
+  .imp-label{font-weight:600;font-size:14px}
+  .imp-line{color:var(--muted);font-size:12.5px;margin-top:2px;word-break:break-word}
   .pop{position:absolute;right:0;top:42px;width:270px;z-index:50;padding:14px;background:linear-gradient(180deg,var(--card),var(--elev));
     border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);animation:pop .2s;max-height:min(72vh,540px);overflow-y:auto}
 
@@ -1328,34 +1333,141 @@ function Landing({auth}){
     </div>
   );
 }
+/* ============ IMPORT (trips/<slug>.json -> Firestore) ============ */
+// A trip file never overwrites these: they belong to the live trip.
+const IMPORT_KEEP=new Set(["slug","createdAt","editors","checked","archived","costs","payments"]);
+const IMPORT_LABELS={flnotes:"Flight notes",heroImage:"Hero image",hotelCoords:"Hotel location",cityCoords:"City location"};
+const importLabel=(f)=>IMPORT_LABELS[f]||TITLECASE(f);
+const stableJSON=(v)=>JSON.stringify(v,(k,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk],o),{}):x);
+const same=(a,b)=>stableJSON(a)===stableJSON(b);
+const short=(v)=>{ const t=typeof v==="string"?v:JSON.stringify(v); return t==null?"(none)":t.length>60?t.slice(0,57)+"…":t; };
+const questCore=(q)=>{ const {done,...rest}=q||{}; return rest; }; // completion is the crew's, not the file's
+// Human-readable lines for what differs between two versions of one item.
+function describeChange(live,file){
+  if(live==null) return ["new"];
+  if(typeof live!=="object"||typeof file!=="object"||live===null||file===null) return [`${short(live)} → ${short(file)}`];
+  if(Array.isArray(live)&&Array.isArray(file)){
+    const out=[]; const n=Math.max(live.length,file.length);
+    for(let i=0;i<n;i++){ if(same(live[i],file[i])) continue; const f=file[i], l=live[i];
+      const lab=(x)=>{ if(!x||typeof x!=="object") return short(x);
+        return [x.time,x.n,x.text||x.title||x.name||x.l].filter(Boolean).join(" ")||short(x); };
+      if(f==null) out.push(`only live: ${lab(l)}`); else if(l==null) out.push(`+ ${lab(f)}`);
+      else if(f&&typeof f==="object"&&l&&typeof l==="object"&&f.text===l.text&&f.time!==l.time) out.push(`${f.text}: ${l.time||"(no time)"} → ${f.time}`);
+      else out.push(lab(f)); }
+    return out.length?out:["reordered"];
+  }
+  const out=[];
+  for(const k of new Set([...Object.keys(live),...Object.keys(file)])){
+    if(same(live[k],file[k])||!(k in file)) continue;
+    const a=live[k], b=file[k];
+    if(typeof a==="string"&&typeof b==="string"&&a.length<70&&b.length<70) out.push(`${k}: ${a||"(empty)"} → ${b}`);
+    else if(Array.isArray(a)&&Array.isArray(b)) describeChange(a,b).forEach(x=>out.push(`${k}: ${x}`));
+    else out.push(`${k} updated`);
+  }
+  return out;
+}
+// Everything the file would change, one checkbox each.
+function importChanges(live,file){
+  const items=[];
+  const add=(key,label,lines,apply)=>items.push({key,label,lines,apply});
+  for(const field of Object.keys(file)){
+    if(IMPORT_KEEP.has(field)) continue;
+    const fv=file[field], lv=live[field];
+    const byId=Array.isArray(fv)&&fv.length&&fv.every(x=>x&&typeof x==="object"&&x.id);
+    if(byId){
+      const core=field==="quests"?questCore:(x)=>x;
+      const liveArr=Array.isArray(lv)?lv:[];
+      fv.forEach((item,fi)=>{
+        const li=liveArr.findIndex(x=>x&&x.id===item.id); const cur=li>=0?liveArr[li]:null;
+        if(cur&&same(core(cur),core(item))) return;
+        const name=field==="days"?`${item.day||"Day"} · ${item.title||""}`:field==="flights"?`Flight ${item.route||item.flight||item.id}`:field==="quests"?`Quest: ${item.text||item.id}`:`${field}: ${item.title||item.name||item.id}`;
+        add(`${field}:${item.id}`,name,cur?describeChange(core(cur),core(item)):["new"],(t)=>{
+          const arr=Array.isArray(t[field])?t[field]:(t[field]=[]);
+          const i=arr.findIndex(x=>x&&x.id===item.id);
+          const next=field==="quests"&&i>=0?{...item,done:arr[i].done}:item;
+          if(i>=0){ arr[i]=next; return; }
+          const prev=fi>0?fv[fi-1].id:null; const at=prev?arr.findIndex(x=>x&&x.id===prev):-1;
+          arr.splice(at+1,0,next); // keep the file's order for new items
+        });
+      });
+    } else if(fv&&typeof fv==="object"&&!Array.isArray(fv)){
+      for(const k of Object.keys(fv)){
+        const lsub=lv&&typeof lv==="object"?lv[k]:undefined;
+        if(same(lsub,fv[k])) continue;
+        const label=field==="meta"?`Trip ${k}`:`${importLabel(field)}: ${k}`;
+        add(`${field}.${k}`,label,describeChange(lsub,fv[k]),(t)=>{ if(!t[field]||typeof t[field]!=="object") t[field]={}; t[field][k]=fv[k]; });
+      }
+    } else if(!same(lv,fv)){
+      const lines=typeof fv==="string"&&typeof lv==="string"&&(fv.length>70||lv.length>70)?["text updated"]:describeChange(lv,fv);
+      add(field,importLabel(field),lines,(t)=>{ t[field]=fv; });
+    }
+  }
+  return items;
+}
 function ImportView({slug,auth,go}){
   const owner=isOwner(auth.user);
   const [err,setErr]=useState("");
+  const [state,setState]=useState({phase:"idle"}); // idle | loading | review | saving
+  const [picked,setPicked]=useState({});
   const ranRef=useRef(false);
-  const run=useCallback(async()=>{
+  const load=useCallback(async()=>{
     if(!(fb&&fb.db)){ setErr("Sync is not available."); return; }
-    setErr("");
+    setErr(""); setState({phase:"loading"});
     try{
       // unique URL so no cache (including an older service worker) can answer with a stale copy
       const res=await fetch(`trips/${encodeURIComponent(slug)}.json?v=${Date.now()}`,{cache:"no-store"});
       if(!res.ok) throw new Error(`Couldn't find trips/${slug}.json (${res.status}).`);
-      const data=await res.json();
-      data.slug=slug; if(data.archived==null) data.archived=false; data.createdAt=data.createdAt||Date.now();
-      await fb.db.collection("trips").doc(slug).set(data,{merge:true});
-      store.putLocal(slug,normalize(slug,data));
-      go(slug);
-    }catch(e){ setErr(String((e&&e.message)||e)); }
+      const file=await res.json();
+      const ref=fb.db.collection("trips").doc(slug);
+      const snap=await ref.get();
+      if(!snap.exists){ // brand new trip: nothing to protect, create it
+        file.slug=slug; if(file.archived==null) file.archived=false; file.createdAt=file.createdAt||Date.now();
+        await ref.set(file); store.putLocal(slug,normalize(slug,file)); go(slug); return;
+      }
+      const live=snap.data(); const items=importChanges(live,file);
+      setPicked(Object.fromEntries(items.map(it=>[it.key,true])));
+      setState({phase:"review",live,items});
+    }catch(e){ setErr(String((e&&e.message)||e)); setState({phase:"idle"}); }
   },[slug,go]);
-  useEffect(()=>{ if(owner && !ranRef.current){ ranRef.current=true; run(); } },[owner,run]);
+  const apply=async()=>{
+    const {live,items}=state; const chosen=items.filter(it=>picked[it.key]);
+    setState(s=>({...s,phase:"saving"})); setErr("");
+    try{
+      const next=JSON.parse(JSON.stringify(live)); chosen.forEach(it=>it.apply(next));
+      const fields=[...new Set(chosen.map(it=>it.key.split(/[:.]/)[0]))];
+      const patch=Object.fromEntries(fields.map(f=>[f,next[f]]));
+      if(fields.length) await fb.db.collection("trips").doc(slug).update(patch);
+      store.putLocal(slug,normalize(slug,next)); go(slug);
+    }catch(e){ setErr(String((e&&e.message)||e)); setState(s=>({...s,phase:"review"})); }
+  };
+  useEffect(()=>{ if(owner && !ranRef.current){ ranRef.current=true; load(); } },[owner,load]);
+  const items=state.items||[]; const n=items.filter(it=>picked[it.key]).length;
   return (
     <div className="wrap">
       <div className="topbar"><div className="brand"><div className="mark">🧭</div><div className="name">Travel<small>your trips, one place</small></div></div>{auth.user&&<AccountChip auth={auth}/>}</div>
-      <div className="landing">
-        <div style={{fontSize:46,marginBottom:8}}>📦</div>
-        <h1>Import “{slug}”</h1>
+      <div className="landing" style={state.phase==="review"||state.phase==="saving"?{maxWidth:680,textAlign:"left"}:undefined}>
+        <div style={{fontSize:46,marginBottom:8,textAlign:"center"}}>📦</div>
+        <h1 style={{textAlign:"center"}}>Import “{slug}”</h1>
         {!owner ? <><p>Sign in as the owner to add this trip to your account.</p><button className="btn primary" onClick={auth.signIn}>Sign in with Google</button></>
-          : err ? <><p className="err">{err}</p><button className="btn" onClick={run}>Try again</button></>
-          : <p className="muted">Building your trip…</p>}
+          : (state.phase==="review"||state.phase==="saving") ? (items.length===0
+            ? <div style={{textAlign:"center"}}><p className="muted">The live trip already matches this file. Nothing to change.</p><button className="btn primary" onClick={()=>go(slug)}>Open trip</button></div>
+            : <>
+              <p className="muted" style={{textAlign:"center"}}>The trip file differs from the live trip in {items.length} place{items.length>1?"s":""}. Untick anything the crew changed on purpose. Checked items, costs, editors and quest progress are never touched.</p>
+              <div className="card tight" style={{margin:"16px 0"}}>
+                {items.map(it=>(
+                  <label key={it.key} className="imp-row">
+                    <input type="checkbox" checked={!!picked[it.key]} onChange={e=>setPicked(p=>({...p,[it.key]:e.target.checked}))}/>
+                    <div><div className="imp-label">{it.label}</div>{it.lines.slice(0,6).map((l,i)=><div key={i} className="imp-line">{l}</div>)}{it.lines.length>6 && <div className="imp-line">…and {it.lines.length-6} more</div>}</div>
+                  </label>))}
+              </div>
+              {err && <p className="err">{err}</p>}
+              <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+                <button className="btn" onClick={()=>go(slug)}>Cancel</button>
+                <button className="btn primary" disabled={!n||state.phase==="saving"} onClick={apply}>{state.phase==="saving"?"Saving…":`Apply ${n} change${n===1?"":"s"}`}</button>
+              </div>
+            </>)
+          : err ? <><p className="err">{err}</p><button className="btn" onClick={load}>Try again</button></>
+          : <p className="muted">Comparing with the live trip…</p>}
       </div>
     </div>
   );
