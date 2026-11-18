@@ -180,9 +180,9 @@
   .today-tag{background:var(--accent);color:#06111f;font-weight:700;border-radius:999px;padding:1px 8px;margin-right:8px;font-size:10px;letter-spacing:.6px;text-transform:uppercase}
   .map-link{color:var(--accent);font-size:12px;font-weight:600;text-decoration:none;margin-left:8px;white-space:nowrap}
   .map-link:hover{text-decoration:underline}
-  .map-links{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
   .map-pin{text-decoration:none;font-size:11px;margin-left:2px;opacity:.75}
   .map-pin:hover{opacity:1}
+  .row-pin{font-size:14px;align-self:center;padding:4px 6px;opacity:.55}
   .fstatus{display:flex;flex-wrap:wrap;gap:4px 6px;margin:6px 0 2px -8px}
 
   .day{position:relative;padding-left:22px}
@@ -1051,16 +1051,37 @@ function parseClock(t){
 function useNow(ms=30000){ const [n,setN]=useState(()=>new Date());
   useEffect(()=>{ const id=setInterval(()=>setN(new Date()),ms); return()=>clearInterval(id); },[ms]); return n; }
 const mapSearch=(q)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
-const mapPin=(c)=>`https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`;
-const mapDirections=(c)=>`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}`;
+const mapDirections=(c)=>`https://www.google.com/maps/dir/?api=1&destination=${typeof c==="string"?encodeURIComponent(c):c.lat+","+c.lon}`;
 const TITLE_WORDS=(s)=>String(s).replace(/\b\w/g,ch=>ch.toUpperCase());
 // The city a day is in: the last cityCoords key its location names ("A → B" ends in B).
+// Letters and digits only, so "Kelaat M'Gouna" matches "kelaat mgouna".
+const placeKey=(s)=>String(s||"").toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g,"");
 function dayCity(trip,day){
-  const loc=String((day&&day.location)||"").toLowerCase();
-  return Object.keys(trip.cityCoords||{}).filter(k=>loc.includes(k.toLowerCase())).pop()||null;
+  const loc=placeKey(day&&day.location); let best=null, at=-1;
+  for(const k of Object.keys(trip.cityCoords||{})){ const i=loc.lastIndexOf(placeKey(k)); if(placeKey(k)&&i>at){ at=i; best=k; } }
+  return best;
 }
-// Suggestions worth a map pin name a place: a capitalised word after the first one.
+// Same, but a day that names no known city ("Great Slave Lake") is in the city of
+// the closest day before it, else after it.
+function tripDayCity(trip,idx){
+  const days=trip.days||[];
+  for(let i=idx;i>=0;i--){ const c=dayCity(trip,days[i]); if(c) return c; }
+  for(let i=idx+1;i<days.length;i++){ const c=dayCity(trip,days[i]); if(c) return c; }
+  return null;
+}
 const looksLikePlace=(s)=>/\s[A-Z][a-z]/.test(String(s||""));
+// What to search Maps for, from an itinerary item or suggestion:
+//  "Land in Vancouver (YVR)" -> "YVR airport", "Check in · Explorer Hotel" -> "Explorer Hotel, <city>"
+function placeQuery(text,where){
+  const s=String(text||"").trim(); if(!s) return null;
+  const travel=/\b(depart|land|landing|arrive|connect|flight|fly)\b/i.test(s);
+  const code=(s.match(/\(([A-Z]{3})\)/)||s.match(/\b([A-Z]{3})\b/)||[])[1];
+  if(travel&&code) return code.toUpperCase()+" airport";
+  const parts=s.split(/\s+·\s+|,\s+/); const pick=parts.filter(looksLikePlace).pop()||parts[0];
+  const core=pick.replace(/\s*\(.*?\)/g,"").replace(/^(depart(ing)?(\s+for)?|land(ing)?(\s+in)?|arriv(e|ing)(\s+(at|in))?|connect(ing)?(\s+at)?|fly(ing)?(\s+to)?)\s+/i,"").trim();
+  if(/\b(land|landing|flight)\b/i.test(s)&&!/airport/i.test(core)) return core+" airport";
+  return where&&placeKey(core)!==placeKey(where)?`${core}, ${where}`:core;
+}
 // "AC 107 + AC 254" -> ["AC107","AC254"]
 function flightCodes(s){ return [...String(s||"").matchAll(/\b([A-Z]{2}|[A-Z]\d|\d[A-Z])\s?(\d{1,4})\b/g)].map(m=>m[1]+m[2]); }
 const flightStatusURL=(code)=>`https://www.google.com/search?q=${encodeURIComponent(code+" flight status")}`;
@@ -1854,9 +1875,11 @@ function DayCard({trip,day,idx,update,onOpen,dragHandle,onMoveDay,dayCount,isTod
   const moveDetail=(from,to)=>patch(d=>moveItem(d.details,from,to));
   const di=useDragList(moveDetail);
   const details=day.details||[];
-  const city=trip?dayCity(trip,day):null;
+  const city=trip?tripDayCity(trip,idx):null;
   const where=city?TITLE_WORDS(city):(trip&&trip.country)||"";
   const hotel=city&&trip.hotelCoords&&trip.hotelCoords[city];
+  const prevStay=trip&&idx>0?((trip.days||[])[idx-1]||{}).accommodation:null;
+  const showHotelLink=!!day.accommodation&&(isToday||prevStay!==day.accommodation);
   return (
     <div className={"card day "+type+(isToday?" is-today":"")} id={"day-"+(day.id||idx)}>
       <div className="day-head">
@@ -1864,8 +1887,7 @@ function DayCard({trip,day,idx,update,onOpen,dragHandle,onMoveDay,dayCount,isTod
         <div className="day-meta">
           <div className="day-daylabel">{isToday && <span className="today-tag">Today</span>}<Editable value={day.day} onChange={v=>patch(d=>d.day=v)} placeholder="Day 1"/>{" · "}<Editable value={day.date} onChange={v=>patch(d=>d.date=v)} placeholder="Mon, Jan 1"/></div>
           <div className="day-title"><Editable value={day.title} onChange={v=>patch(d=>d.title=v)} placeholder="Title"/></div>
-          <div className="day-loc">📍 <Editable value={day.location} onChange={v=>patch(d=>d.location=v)} placeholder="Location"/>
-            {city && <a className="map-link" href={mapPin(trip.cityCoords[city])} target="_blank" rel="noopener" title={`Open ${TITLE_WORDS(city)} in Maps`}>Map ↗</a>}</div>
+          <div className="day-loc">📍 <Editable value={day.location} onChange={v=>patch(d=>d.location=v)} placeholder="Location"/></div>
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
           <span className={"type-pill "+type} onClick={canEdit?cycleType:undefined} title={canEdit?"Change type":""} style={{cursor:canEdit?"pointer":"default"}}>{TC[type].label}</span>
@@ -1889,6 +1911,7 @@ function DayCard({trip,day,idx,update,onOpen,dragHandle,onMoveDay,dayCount,isTod
               <div className="detail-text"><Editable value={dt.text} onChange={v=>patch(d=>d.details[j].text=v)} placeholder="What's happening"/></div>
               <div className="detail-sub"><Editable value={dt.sub} onChange={v=>patch(d=>d.details[j].sub=v)} placeholder="Notes" multiline/></div>
             </div>
+            {trip && placeQuery(dt.text,where) && <a className="map-pin row-pin" href={mapSearch(placeQuery(dt.text,where))} target="_blank" rel="noopener" title={`Find "${placeQuery(dt.text,where)}" in Maps`}>📍</a>}
             {canEdit && <MoveBtns i={j} len={details.length} onMove={moveDetail}/>}
             {canEdit && <button className="icon-btn" title="Delete item" onClick={()=>patch(d=>d.details.splice(j,1),"Item deleted")}>✕</button>}
           </div>
@@ -1897,12 +1920,11 @@ function DayCard({trip,day,idx,update,onOpen,dragHandle,onMoveDay,dayCount,isTod
         {(day.tips!==undefined && (canEdit||day.tips)) && <div className="tips"><b>💡 Tip: </b><Editable value={day.tips} onChange={v=>patch(d=>d.tips=v)} placeholder="Add a tip" multiline/></div>}
         {(canEdit || day.accommodation) && <div className="accom"><span style={{fontSize:18}}>🛏</span><div style={{flex:1}}><div className="al">Accommodation</div>
           <Editable value={day.accommodation||""} onChange={v=>patch(d=>d.accommodation=v||null)} placeholder="Hotel, riad, Airbnb…"/></div>
-          {day.accommodation && trip && <div className="map-links">
-            <a className="map-link" target="_blank" rel="noopener" href={hotel?mapPin(hotel):mapSearch(`${String(day.accommodation).replace(/\s*\(.*?\)/g,"")}, ${where}`)}>Map ↗</a>
-            {hotel && <a className="map-link" target="_blank" rel="noopener" href={mapDirections(hotel)}>Directions ↗</a>}</div>}</div>}
+          {showHotelLink && trip && <a className="map-link" target="_blank" rel="noopener"
+            href={mapDirections(hotel||`${String(day.accommodation).replace(/\s*\(.*?\)/g,"")}, ${where}`)}>Directions ↗</a>}</div>}
         {(day.suggestions&&day.suggestions.length>0) && <div className="suggs">{day.suggestions.map((s,k)=>(
           <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/>
-            {trip && looksLikePlace(s) && <a className="map-pin" href={mapSearch(`${String(s).replace(/\s*\(.*?\)/g,"")}, ${where}`)} target="_blank" rel="noopener" title="Open in Maps">📍</a>}{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1),"Suggestion deleted")}>✕</span>}</span>))}</div>}
+            {trip && placeQuery(s,where) && <a className="map-pin" href={mapSearch(placeQuery(s,where))} target="_blank" rel="noopener" title="Open in Maps">📍</a>}{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1),"Suggestion deleted")}>✕</span>}</span>))}</div>}
         {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.suggestions=d.suggestions||[]).push("New idea"))}>+ Add suggestion</button>}
       </div>}
     </div>
@@ -1980,8 +2002,7 @@ function Weather({trip}){
   const days=trip.days||[]; const start=trip.meta.startDate;
   const cards=[]; let city=cities[0][0];
   for(let iso=start, i=0; iso<=win.to; iso=isoAdd(iso,1), i++){
-    const loc=String((days[i]&&days[i].location)||"").toLowerCase();
-    const hit=cities.map(c=>c[0]).filter(n=>loc.includes(n.toLowerCase())).pop(); // "A → B": end of the day counts
+    const hit=dayCity(trip,days[i]); // "A → B": where the day ends counts
     if(hit) city=hit;
     if(iso>=win.from) cards.push({iso,city});
   }
