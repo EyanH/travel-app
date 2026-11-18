@@ -1698,20 +1698,74 @@ function DayModal({days,idx,setIdx,update}){
 }
 
 /* ============ WEATHER ============ */
+const FORECAST_DAYS=16; // how far ahead Open-Meteo's free forecast reaches
+const isoLocal=(d)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const isoAdd=(iso,n)=>{ const d=new Date(iso+"T00:00:00"); d.setDate(d.getDate()+n); return isoLocal(d); };
+// Which slice of the trip the forecast can see right now, or null if none of it.
+function forecastWindow(meta){
+  const s=meta&&meta.startDate, e=(meta&&meta.endDate)||s;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s||"")||!/^\d{4}-\d{2}-\d{2}$/.test(e||"")) return null;
+  const today=isoLocal(new Date()), last=isoAdd(today,FORECAST_DAYS-1);
+  const from=s>today?s:today, to=e<last?e:last;
+  return from<=to?{from,to,last}:null;
+}
+// Average cloud cover over 10pm to 2am: what matters for aurora and stargazing.
+function nightCloud(hourly,iso){
+  if(!hourly||!hourly.time) return null;
+  const want=new Set([`${iso}T22:00`,`${iso}T23:00`,...[0,1,2].map(h=>`${isoAdd(iso,1)}T0${h}:00`)]);
+  const v=hourly.time.map((t,i)=>want.has(t)?hourly.cloud_cover[i]:null).filter(x=>x!=null);
+  return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null;
+}
 function Weather({trip}){
   const [data,setData]=useState(null); const [err,setErr]=useState(false);
   const cities=useMemo(()=>Object.entries(trip.cityCoords||{}).slice(0,10),[trip.cityCoords]);
-  useEffect(()=>{ if(cities.length===0){setData([]);return;} let alive=true;
-    Promise.all(cities.map(([name,c])=>fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto`).then(r=>r.json()).then(j=>({name,d:j.daily})).catch(()=>({name,d:null}))))
+  const win=forecastWindow(trip.meta);
+  const winKey=win?win.from+win.to:"";
+  useEffect(()=>{ if(cities.length===0){setData([]);return;} let alive=true; setData(null); setErr(false);
+    // one extra day of hourly data so the last night's after-midnight hours are there
+    const range=win?`&start_date=${win.from}&end_date=${win.to<win.last?isoAdd(win.to,1):win.to}&hourly=cloud_cover`:"&forecast_days=1";
+    Promise.all(cities.map(([name,c])=>fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min${range}&timezone=auto`).then(r=>r.json()).then(j=>({name,d:j.daily,h:j.hourly})).catch(()=>({name,d:null}))))
       .then(res=>{ if(alive) setData(res); }).catch(()=>{ if(alive) setErr(true); });
-    return()=>{alive=false;}; },[cities]);
+    return()=>{alive=false;}; },[cities,winKey]);
   if(cities.length===0) return null;
-  return (
+  const head=(title)=><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><h3 style={{fontSize:19}}>{title}</h3><span className="chip">Open-Meteo · live</span></div>;
+  if(!win) return (
     <div className="card">
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}><h3 style={{fontSize:19}}>Weather right now</h3><span className="chip">Open-Meteo · live</span></div>
+      {head("Weather right now")}
       {!data ? <div className="muted small">Loading weather…</div> : err ? <div className="muted small">Weather unavailable.</div> :
         <div className="wgrid">{data.map(({name,d})=>{ if(!d) return <div className="wcard" key={name}><div className="wl">{name}</div><div className="wr">-</div></div>;
           const [ic,lab]=wmo(d.weather_code?.[0]); return <div className="wcard" key={name}><div className="wc">{ic}</div><div className="wt">{Math.round(d.temperature_2m_max?.[0])}°</div><div className="wl">{name}</div><div className="wr">{Math.round(d.temperature_2m_min?.[0])}° · {lab}</div></div>; })}</div>}
+    </div>
+  );
+  // Trip is within forecast range: one card per trip day, using the city that
+  // day's location names (falling back to the day before, then the first city).
+  const days=trip.days||[]; const start=trip.meta.startDate;
+  const cards=[]; let city=cities[0][0];
+  for(let iso=start, i=0; iso<=win.to; iso=isoAdd(iso,1), i++){
+    const loc=String((days[i]&&days[i].location)||"").toLowerCase();
+    const hit=cities.map(c=>c[0]).filter(n=>loc.includes(n.toLowerCase())).pop(); // "A → B": end of the day counts
+    if(hit) city=hit;
+    if(iso>=win.from) cards.push({iso,city});
+  }
+  const byCity=Object.fromEntries((data||[]).map(r=>[r.name,r]));
+  const ended=trip.meta.endDate&&trip.meta.endDate>win.to;
+  return (
+    <div className="card">
+      {head("Trip forecast")}
+      {!data ? <div className="muted small">Loading forecast…</div> : err ? <div className="muted small">Forecast unavailable.</div> : <>
+        <div className="wgrid">{cards.map(({iso,city})=>{
+          const r=byCity[city]; const k=r&&r.d&&r.d.time?r.d.time.indexOf(iso):-1;
+          const dt=new Date(iso+"T00:00:00"); const label=dt.toLocaleDateString(undefined,{weekday:"short",day:"numeric"});
+          if(k<0) return <div className="wcard" key={iso}><div className="wl">{label}</div><div className="wr">-</div></div>;
+          const [ic,lab]=wmo(r.d.weather_code[k]); const nc=nightCloud(r.h,iso);
+          return <div className="wcard" key={iso}><div className="wl" style={{marginTop:0}}>{label}</div><div className="wc">{ic}</div>
+            <div className="wt">{Math.round(r.d.temperature_2m_max[k])}°</div>
+            <div className="wr">{Math.round(r.d.temperature_2m_min[k])}° · {lab}</div>
+            {cities.length>1 && <div className="wr" style={{textTransform:"capitalize"}}>{city}</div>}
+            {nc!=null && <div className="wr" title="Average cloud cover, 10pm to 2am">🌙 {nc<=25?"Clear":nc<=60?"Some cloud":"Cloudy"} ({nc}%)</div>}
+          </div>; })}</div>
+        {ended && <div className="muted small" style={{marginTop:10}}>Later days appear once they're within {FORECAST_DAYS} days.</div>}
+      </>}
     </div>
   );
 }
