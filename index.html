@@ -1655,7 +1655,9 @@ function Itinerary({trip,update}){
         const wd=dt?{w:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()],n:String(dt.getDate())}:weekdayShort(d.date);
         return <div className={"rpill"+(i===todayIdx?" today":"")} key={d.id||i} title="Open day" onClick={()=>setModalDay(i)}>
           <div className="rw">{wd.w||("D"+(i+1))}</div><div className="rn">{wd.n||(i+1)}</div><div className="re">{d.emoji||"📍"}</div></div>; })}</div>}
-      <div className="section-title"><h2>Itinerary</h2>{canEdit && <button className="btn sm" onClick={addDay}>+ Add day</button>}</div>
+      <div className="section-title"><h2>Itinerary</h2><div style={{display:"flex",gap:8}}>
+        {days.length>0 && isos.some(Boolean) && <button className="btn sm" onClick={()=>downloadICS(trip)} title="Every day, plus each timed item, in local time">📅 Add to calendar</button>}
+        {canEdit && <button className="btn sm" onClick={addDay}>+ Add day</button>}</div></div>
       {days.length===0 && <div className="card muted center">No days yet. Add your first day.</div>}
       {days.map((d,i)=>(
         <div key={d.id||i}
@@ -1669,6 +1671,44 @@ function Itinerary({trip,update}){
     </div>
   );
 }
+/* ============ CALENDAR EXPORT (.ics) ============ */
+// One all-day event per day (schedule in the notes) plus a 30-minute event for
+// every item with a clock time. Times are "floating" (no time zone), so 3:30 AM
+// shows as 3:30 AM on whichever phone is wherever the trip is.
+function tripICS(trip){
+  const esc=(v)=>String(v==null?"":v).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");
+  const enc=new TextEncoder();
+  const fold=(line)=>{ // RFC 5545: lines over 75 bytes continue on the next line after a space
+    const out=[]; let cur="";
+    for(const ch of line){ if(enc.encode(cur+ch).length>(out.length?74:75)){ out.push(cur); cur=ch; } else cur+=ch; }
+    out.push(cur); return out.join("\r\n ");
+  };
+  const ymd=(iso)=>iso.replace(/-/g,"");
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  const slug=trip.slug||"trip"; const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Travel app//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH",
+    "X-WR-CALNAME:"+esc((trip.meta&&trip.meta.tripName)||slug)];
+  (trip.days||[]).forEach((d,i)=>{
+    const iso=dayISO(trip,i); if(!iso) return; const id=d.id||("d"+i); const details=d.details||[];
+    const notes=[...details.map(x=>[x.time,x.text].filter(Boolean).join("  ")+(x.sub?` (${x.sub})`:"")),
+      d.accommodation?`Staying: ${d.accommodation}`:"", d.tips?`Tip: ${d.tips}`:""].filter(Boolean).join("\n");
+    L.push("BEGIN:VEVENT",`UID:${slug}-${id}-day@travel-app`,"DTSTAMP:"+stamp,"DTSTART;VALUE=DATE:"+ymd(iso),"DTEND;VALUE=DATE:"+ymd(isoAdd(iso,1)),
+      "SUMMARY:"+esc(`${d.emoji?d.emoji+" ":""}${d.day?d.day+": ":""}${d.title||""}`),"LOCATION:"+esc(d.location),"DESCRIPTION:"+esc(notes),"TRANSP:TRANSPARENT","END:VEVENT");
+    details.forEach((x,j)=>{ const m=parseClock(x.time); if(m==null||!x.text) return;
+      const date=isoAdd(iso,Math.floor(m/1440)); const hm=m%1440;
+      const t=ymd(date)+"T"+String(Math.floor(hm/60)).padStart(2,"0")+String(hm%60).padStart(2,"0")+"00";
+      L.push("BEGIN:VEVENT",`UID:${slug}-${id}-${j}@travel-app`,"DTSTAMP:"+stamp,"DTSTART:"+t,"DURATION:PT30M",
+        "SUMMARY:"+esc(x.text),"LOCATION:"+esc(d.location),"DESCRIPTION:"+esc(x.sub||""),"END:VEVENT"); });
+  });
+  L.push("END:VCALENDAR");
+  return L.map(fold).join("\r\n")+"\r\n";
+}
+function downloadICS(trip){
+  const blob=new Blob([tripICS(trip)],{type:"text/calendar;charset=utf-8"});
+  const url=URL.createObjectURL(blob); const a=document.createElement("a");
+  a.href=url; a.download=(trip.slug||"trip")+".ics"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+
 /* What's next while the trip is on: today's next timed item, or the first one
    coming up in the next two days (that 3:30 AM airport run the night before). */
 function TodayBanner({trip,todayIdx,now}){
