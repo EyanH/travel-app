@@ -8,7 +8,7 @@
      - HTML  : network-first, fall back to cache  (so deploys show up immediately)
      - assets: cache-first, revalidate in background (CDN libs, fonts, icons, images)
 */
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL = "travel-shell-" + VERSION;
 const ASSETS = "travel-assets-" + VERSION;
 
@@ -61,6 +61,9 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = req.url;
   if (isBypass(url)) return;                 // straight to network
+  // Trip seed files are only read by ?import=, which must see the latest
+  // deploy. Cache-first here once re-imported a stale copy.
+  if (/\/trips\/[^/?#]+\.json(\?|#|$)/.test(url)) return;
   if (url.startsWith("chrome-extension")) return;
 
   if (isHTML(req)) {
