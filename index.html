@@ -170,6 +170,20 @@
   .rpill .rw{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
   .rpill .rn{font-size:19px;font-weight:700;font-family:'Playfair Display',serif;margin-top:1px}
   .rpill .re{font-size:15px;margin-top:2px}
+  .rpill.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .today-banner{border-color:rgba(120,187,255,.45);background:linear-gradient(180deg,rgba(120,187,255,.10),var(--elev))}
+  .today-banner .tb-label{font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+  .today-banner .tb-title{font-family:'Playfair Display',serif;font-size:21px;margin-top:2px}
+  .today-banner .tb-next{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-top:12px;font-size:14px}
+  .today-banner .tb-when{background:var(--accent);color:#06111f;font-weight:700;font-size:12px;border-radius:999px;padding:2px 10px}
+  .card.day.is-today{box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+  .today-tag{background:var(--accent);color:#06111f;font-weight:700;border-radius:999px;padding:1px 8px;margin-right:8px;font-size:10px;letter-spacing:.6px;text-transform:uppercase}
+  .map-link{color:var(--accent);font-size:12px;font-weight:600;text-decoration:none;margin-left:8px;white-space:nowrap}
+  .map-link:hover{text-decoration:underline}
+  .map-links{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .map-pin{text-decoration:none;font-size:11px;margin-left:2px;opacity:.75}
+  .map-pin:hover{opacity:1}
+  .fstatus{display:flex;flex-wrap:wrap;gap:4px 6px;margin:6px 0 2px -8px}
 
   .day{position:relative;padding-left:22px}
   .day:before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:4px;background:var(--muted2)}
@@ -1010,6 +1024,41 @@ function weekdayShort(dateStr){ const m={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul
   const c=(dateStr||"").replace(/^[A-Za-z]+,\s*/,"").trim().split(" "); if(c.length<2) return {w:"",n:dateStr||""};
   const mo=m[(c[0]||"").slice(0,3).toLowerCase()], day=parseInt(c[1]); if(mo==null||isNaN(day)) return {w:"",n:dateStr};
   const d=new Date(2026,mo,day); return {w:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()], n:String(day)}; }
+// yyyy-mm-dd of trip day i: the day's own "Sat, Nov 21" date (year taken from
+// the trip's start date, rolling over at new year), else start date + i.
+function dayISO(trip,i){
+  const start=(trip.meta&&trip.meta.startDate)||""; if(!/^\d{4}-\d{2}-\d{2}$/.test(start)) return null;
+  const m={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const c=String(((trip.days||[])[i]||{}).date||"").replace(/^[A-Za-z]+,\s*/,"").trim().split(/\s+/);
+  const mo=m[(c[0]||"").slice(0,3).toLowerCase()], dd=parseInt(c[1]);
+  if(mo==null||isNaN(dd)) return isoAdd(start,i);
+  let y=+start.slice(0,4); if(mo<+start.slice(5,7)-1) y++;
+  return isoLocal(new Date(y,mo,dd));
+}
+// "10:00 AM", "~7:00 PM", "18:10", "1:20 AM +1" -> minutes after midnight (next day adds 1440); "Morning" -> null
+function parseClock(t){
+  const s=String(t||""); const plus=/\+\s*1\b/.test(s)?1440:0;
+  let m=s.match(/(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\b/i);
+  if(m){ let h=+m[1]%12; if(/p/i.test(m[3])) h+=12; return h*60+(+(m[2]||0))+plus; }
+  m=s.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  return m?(+m[1])*60+(+m[2])+plus:null;
+}
+function useNow(ms=30000){ const [n,setN]=useState(()=>new Date());
+  useEffect(()=>{ const id=setInterval(()=>setN(new Date()),ms); return()=>clearInterval(id); },[ms]); return n; }
+const mapSearch=(q)=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+const mapPin=(c)=>`https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`;
+const mapDirections=(c)=>`https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}`;
+const TITLE_WORDS=(s)=>String(s).replace(/\b\w/g,ch=>ch.toUpperCase());
+// The city a day is in: the last cityCoords key its location names ("A → B" ends in B).
+function dayCity(trip,day){
+  const loc=String((day&&day.location)||"").toLowerCase();
+  return Object.keys(trip.cityCoords||{}).filter(k=>loc.includes(k.toLowerCase())).pop()||null;
+}
+// Suggestions worth a map pin name a place: a capitalised word after the first one.
+const looksLikePlace=(s)=>/\s[A-Z][a-z]/.test(String(s||""));
+// "AC 107 + AC 254" -> ["AC107","AC254"]
+function flightCodes(s){ return [...String(s||"").matchAll(/\b([A-Z]{2}|[A-Z]\d|\d[A-Z])\s?(\d{1,4})\b/g)].map(m=>m[1]+m[2]); }
+const flightStatusURL=(code)=>`https://www.google.com/search?q=${encodeURIComponent(code+" flight status")}`;
 
 /* ============ AUTO-FILL TRAVEL INFO (free: Open-Meteo geocoding+archive, open.er-api FX) ============ */
 const MONTHS_LONG=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -1595,11 +1644,16 @@ function Itinerary({trip,update}){
   const moveDay=(from,to)=>update(t=>{ moveItem(t.days,from,to);
     t.days.forEach((d,i)=>{ if(/^day\s*\d+$/i.test(String(d.day||"").trim())) d.day="Day "+(i+1); }); return t; });
   const dd=useDragList(moveDay);
+  const now=useNow();
+  const isos=days.map((_,i)=>dayISO(trip,i));
+  const todayIdx=isos.indexOf(isoLocal(now));
   return (
     <div>
+      {todayIdx>=0 && <TodayBanner trip={trip} todayIdx={todayIdx} now={now}/>}
       <Weather trip={trip}/>
-      {days.length>1 && <div className="rail">{days.map((d,i)=>{ const wd=weekdayShort(d.date);
-        return <div className="rpill" key={d.id||i} title="Open day" onClick={()=>setModalDay(i)}>
+      {days.length>1 && <div className="rail">{days.map((d,i)=>{ const iso=isos[i]; const dt=iso?new Date(iso+"T00:00:00"):null;
+        const wd=dt?{w:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][dt.getDay()],n:String(dt.getDate())}:weekdayShort(d.date);
+        return <div className={"rpill"+(i===todayIdx?" today":"")} key={d.id||i} title="Open day" onClick={()=>setModalDay(i)}>
           <div className="rw">{wd.w||("D"+(i+1))}</div><div className="rn">{wd.n||(i+1)}</div><div className="re">{d.emoji||"📍"}</div></div>; })}</div>}
       <div className="section-title"><h2>Itinerary</h2>{canEdit && <button className="btn sm" onClick={addDay}>+ Add day</button>}</div>
       {days.length===0 && <div className="card muted center">No days yet. Add your first day.</div>}
@@ -1607,15 +1661,38 @@ function Itinerary({trip,update}){
         <div key={d.id||i}
           className={(dd.dragIdx===i?"dragging ":"")+(dd.overIdx===i&&dd.dragIdx!==i?"drag-over-card":"")}
           draggable={canEdit&&dd.armed===i} {...(canEdit?dd.rowProps(i):{})}>
-          <DayCard day={d} idx={i} update={update} onOpen={()=>setModalDay(i)}
+          <DayCard trip={trip} day={d} idx={i} isToday={i===todayIdx} update={update} onOpen={()=>setModalDay(i)}
             dragHandle={canEdit?dd.handleProps(i):null} onMoveDay={canEdit?moveDay:null} dayCount={days.length}/>
         </div>
       ))}
-      {modalDay!=null && <DayModal days={days} idx={modalDay} setIdx={setModalDay} update={update}/>}
+      {modalDay!=null && <DayModal trip={trip} days={days} idx={modalDay} setIdx={setModalDay} update={update}/>}
     </div>
   );
 }
-function DayCard({day,idx,update,onOpen,dragHandle,onMoveDay,dayCount}){
+/* What's next while the trip is on: today's next timed item, or the first one
+   coming up in the next two days (that 3:30 AM airport run the night before). */
+function TodayBanner({trip,todayIdx,now}){
+  const days=trip.days||[]; const day=days[todayIdx]; if(!day) return null;
+  const nowMin=now.getHours()*60+now.getMinutes();
+  let next=null;
+  for(let k=0;k<3&&!next&&todayIdx+k<days.length;k++){
+    for(const dt of (days[todayIdx+k].details||[])){ const m=parseClock(dt.time); if(m==null) continue;
+      const at=m+k*1440; if(at>=nowMin-5){ next={dt,at,k}; break; } }
+  }
+  const fmt=(mins)=>mins<=0?"now":mins<60?`in ${mins} min`:`in ${Math.floor(mins/60)}h${mins%60?` ${mins%60}m`:""}`;
+  const jump=()=>{ const el=document.getElementById("day-"+(day.id||todayIdx)); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
+  return (
+    <div className="card today-banner">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+        <div><div className="tb-label">Today · {day.day||`Day ${todayIdx+1}`}</div><div className="tb-title">{day.emoji||"📍"} {day.title}</div></div>
+        <button className="btn sm" onClick={jump}>Go to today ↓</button>
+      </div>
+      {next && <div className="tb-next"><span className="tb-when">{fmt(next.at-nowMin)}</span>
+        <span><b>{next.k===0?"":next.k===1?"Tomorrow ":(days[todayIdx+next.k].day||"")+" "}{next.dt.time}</b> · {next.dt.text}</span></div>}
+    </div>
+  );
+}
+function DayCard({trip,day,idx,update,onOpen,dragHandle,onMoveDay,dayCount,isToday}){
   const canEdit=React.useContext(CanEdit);
   const [open,setOpen]=useState(true);
   const patch=(fn,label)=>update(t=>{ fn(t.days[idx]); return t; },label);
@@ -1625,14 +1702,18 @@ function DayCard({day,idx,update,onOpen,dragHandle,onMoveDay,dayCount}){
   const moveDetail=(from,to)=>patch(d=>moveItem(d.details,from,to));
   const di=useDragList(moveDetail);
   const details=day.details||[];
+  const city=trip?dayCity(trip,day):null;
+  const where=city?TITLE_WORDS(city):(trip&&trip.country)||"";
+  const hotel=city&&trip.hotelCoords&&trip.hotelCoords[city];
   return (
-    <div className={"card day "+type} id={"day-"+(day.id||idx)}>
+    <div className={"card day "+type+(isToday?" is-today":"")} id={"day-"+(day.id||idx)}>
       <div className="day-head">
         <div className="day-emoji" title={canEdit?"Change emoji":""} onClick={()=>{ if(!canEdit) return; const e=prompt("Emoji:",day.emoji||"📍");if(e!==null)patch(d=>d.emoji=e);}}>{day.emoji||"📍"}</div>
         <div className="day-meta">
-          <div className="day-daylabel"><Editable value={day.day} onChange={v=>patch(d=>d.day=v)} placeholder="Day 1"/>{" · "}<Editable value={day.date} onChange={v=>patch(d=>d.date=v)} placeholder="Mon, Jan 1"/></div>
+          <div className="day-daylabel">{isToday && <span className="today-tag">Today</span>}<Editable value={day.day} onChange={v=>patch(d=>d.day=v)} placeholder="Day 1"/>{" · "}<Editable value={day.date} onChange={v=>patch(d=>d.date=v)} placeholder="Mon, Jan 1"/></div>
           <div className="day-title"><Editable value={day.title} onChange={v=>patch(d=>d.title=v)} placeholder="Title"/></div>
-          <div className="day-loc">📍 <Editable value={day.location} onChange={v=>patch(d=>d.location=v)} placeholder="Location"/></div>
+          <div className="day-loc">📍 <Editable value={day.location} onChange={v=>patch(d=>d.location=v)} placeholder="Location"/>
+            {city && <a className="map-link" href={mapPin(trip.cityCoords[city])} target="_blank" rel="noopener" title={`Open ${TITLE_WORDS(city)} in Maps`}>Map ↗</a>}</div>
         </div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
           <span className={"type-pill "+type} onClick={canEdit?cycleType:undefined} title={canEdit?"Change type":""} style={{cursor:canEdit?"pointer":"default"}}>{TC[type].label}</span>
@@ -1663,9 +1744,13 @@ function DayCard({day,idx,update,onOpen,dragHandle,onMoveDay,dayCount}){
         {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.details=d.details||[]).push({time:"",text:"",sub:""}))}>+ Add item</button>}
         {(day.tips!==undefined && (canEdit||day.tips)) && <div className="tips"><b>💡 Tip: </b><Editable value={day.tips} onChange={v=>patch(d=>d.tips=v)} placeholder="Add a tip" multiline/></div>}
         {(canEdit || day.accommodation) && <div className="accom"><span style={{fontSize:18}}>🛏</span><div style={{flex:1}}><div className="al">Accommodation</div>
-          <Editable value={day.accommodation||""} onChange={v=>patch(d=>d.accommodation=v||null)} placeholder="Hotel, riad, Airbnb…"/></div></div>}
+          <Editable value={day.accommodation||""} onChange={v=>patch(d=>d.accommodation=v||null)} placeholder="Hotel, riad, Airbnb…"/></div>
+          {day.accommodation && trip && <div className="map-links">
+            <a className="map-link" target="_blank" rel="noopener" href={hotel?mapPin(hotel):mapSearch(`${String(day.accommodation).replace(/\s*\(.*?\)/g,"")}, ${where}`)}>Map ↗</a>
+            {hotel && <a className="map-link" target="_blank" rel="noopener" href={mapDirections(hotel)}>Directions ↗</a>}</div>}</div>}
         {(day.suggestions&&day.suggestions.length>0) && <div className="suggs">{day.suggestions.map((s,k)=>(
-          <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/>{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1),"Suggestion deleted")}>✕</span>}</span>))}</div>}
+          <span className="chip" key={k}><Editable value={s} onChange={v=>patch(d=>d.suggestions[k]=v)}/>
+            {trip && looksLikePlace(s) && <a className="map-pin" href={mapSearch(`${String(s).replace(/\s*\(.*?\)/g,"")}, ${where}`)} target="_blank" rel="noopener" title="Open in Maps">📍</a>}{canEdit && <span className="icon-btn" style={{padding:0,marginLeft:2}} onClick={()=>patch(d=>d.suggestions.splice(k,1),"Suggestion deleted")}>✕</span>}</span>))}</div>}
         {canEdit && <button className="btn ghost sm" style={{marginTop:10}} onClick={()=>patch(d=>(d.suggestions=d.suggestions||[]).push("New idea"))}>+ Add suggestion</button>}
       </div>}
     </div>
@@ -1673,7 +1758,7 @@ function DayCard({day,idx,update,onOpen,dragHandle,onMoveDay,dayCount}){
 }
 
 /* ============ DAY MODAL ============ */
-function DayModal({days,idx,setIdx,update}){
+function DayModal({trip,days,idx,setIdx,update}){
   const day=days[idx];
   const go=(n)=>setIdx(Math.max(0,Math.min(days.length-1,n)));
   useEffect(()=>{ const h=(e)=>{ if(e.key==="Escape") setIdx(null); else if(e.key==="ArrowLeft") go(idx-1); else if(e.key==="ArrowRight") go(idx+1); };
@@ -1691,7 +1776,7 @@ function DayModal({days,idx,setIdx,update}){
           <button className="icon-btn" onClick={()=>setIdx(null)}>✕</button>
         </div>
         <div style={{padding:"2px 18px 18px",maxHeight:"76vh",overflowY:"auto"}}>
-          <DayCard day={day} idx={idx} update={update}/>
+          <DayCard trip={trip} day={day} idx={idx} update={update}/>
         </div>
       </div>
     </div>
@@ -1790,6 +1875,8 @@ function Flights({trip,update}){
             <div className="route"><Editable value={f.route} onChange={v=>patch(i,x=>x.route=v)} placeholder="YYZ → CMN → RAK"/></div>
             {canEdit && <button className="icon-btn" onClick={()=>update(t=>{t.flights.splice(i,1);return t;})}>🗑</button>}
           </div>
+          {flightCodes(f.flight||f.flights).length>0 && <div className="fstatus">{flightCodes(f.flight||f.flights).map(c=>
+            <a key={c} className="map-link" href={flightStatusURL(c)} target="_blank" rel="noopener" title={`Live status for ${c}`}>✈ {c} status ↗</a>)}</div>}
           <div className="fgrid">{shown.map(k=><div key={k}><div className="fl">{FL_LABELS[k]||k}</div><div className="fv"><Editable value={String(f[k]??"")} onChange={v=>patch(i,x=>x[k]=v)} placeholder="-"/></div></div>)}</div>
         </div>); })}
       {flights.length===0 && <div className="card muted center">No flights yet.</div>}
