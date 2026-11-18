@@ -190,6 +190,7 @@
   .day.travel:before{background:var(--travel)} .day.explore:before{background:var(--explore)}
   .day.trek:before{background:var(--trek)} .day.flex:before{background:var(--flex)}
   .day-head{display:flex;align-items:flex-start;gap:13px}
+  .day-ctrls{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
   .day-emoji{font-size:27px;line-height:1;cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
   .day-meta{flex:1;min-width:0}
   .day-daylabel{font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
@@ -377,6 +378,72 @@
     padding:11px 14px 11px 18px;box-shadow:var(--shadow-lg);animation:pop .22s;font-size:14px;font-weight:500;
     max-width:calc(100vw - 30px)}
   .icon-btn:disabled{opacity:.28;cursor:default}
+
+  /* ---------- phones: roomier type, full-width rows, app-style bottom tabs ---------- */
+  @media(max-width:640px){
+    body{font-size:16px}
+    .wrap{padding:0 14px}
+    .card{padding:17px 16px;border-radius:16px;margin:14px 0}
+    .section-title{margin:22px 0 4px}
+    .section-title h2{font-size:24px}
+    .btn.sm{font-size:13.5px;padding:9px 13px;border-radius:10px}
+    .icon-btn{padding:8px;font-size:16px}
+    .chip{font-size:13px;padding:6px 12px}
+    .map-link{font-size:13.5px}
+    .map-pin{font-size:14px;padding:2px 4px}
+    /* iOS zooms the page when a focused field is under 16px */
+    input,select,textarea,.cell-input,.mini-select{font-size:16px!important}
+
+    /* bottom tab bar */
+    .tabsbar,html.standalone .tabsbar{position:fixed;top:auto;left:0;right:0;bottom:0;z-index:120;padding:0;
+      background:rgba(9,12,18,.98);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-top:1px solid var(--border)}
+    .tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:0;padding:6px 4px calc(6px + var(--sab));border-bottom:0;overflow:visible}
+    .tab{flex-direction:column;justify-content:center;gap:4px;padding:6px 0;font-size:10.5px;border-radius:12px;letter-spacing:.1px}
+    .tab span{font-size:22px;line-height:1;transition:transform .15s}
+    .tab.active{background:transparent;border-color:transparent;box-shadow:none;color:var(--accent)}
+    .tab.active span{transform:translateY(-1px) scale(1.1)}
+    #tab-content{padding-bottom:calc(96px + var(--sab))!important}
+    .undo-fab,.toast,html.standalone .toast{bottom:calc(86px + var(--sab))}
+
+    /* stats + forecast: swipe sideways instead of stacking */
+    .statrow{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:9px;margin:0 -14px;padding:16px 14px 2px}
+    .statrow::-webkit-scrollbar,.wgrid::-webkit-scrollbar{display:none}
+    .statrow .s{flex:0 0 auto;min-width:88px;padding:11px 15px}
+    .statrow .s b{font-size:24px}
+    .statrow .s > span{font-size:11px}
+    .wgrid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:108px;overflow-x:auto;scrollbar-width:none;
+      margin:0 -16px;padding:0 16px 4px;scroll-snap-type:x proximity}
+    .wcard{scroll-snap-align:start}
+
+    /* day cards */
+    .day-head{flex-wrap:wrap;gap:12px}
+    .day-meta{flex:1 1 0}
+    .day-ctrls{flex:1 1 100%;flex-direction:row;justify-content:space-between;align-items:center;gap:6px;margin-top:-4px}
+    .day-daylabel{font-size:12px}
+    .day-title{font-size:23px;line-height:1.25}
+    .day-loc{font-size:14px;margin-top:4px}
+    .type-pill{font-size:11px;padding:5px 11px}
+    /* item rows: time + actions on top, text gets the full width */
+    .detail-row{flex-wrap:wrap;column-gap:4px;row-gap:3px;padding:13px 0}
+    .detail-time{flex:1 1 auto;order:0;font-size:13.5px;padding-top:0;align-self:center}
+    .detail-row>.row-pin,.detail-row>.move-btns,.detail-row>.icon-btn{order:1;align-self:center}
+    .detail-body{flex:1 1 100%;order:2}
+    .detail-text{font-size:16px;line-height:1.4}
+    .detail-sub{font-size:14.5px;line-height:1.45}
+    .tips{font-size:14.5px;padding:13px 14px}
+    .accom{padding:13px 14px}
+    .suggs{gap:8px}
+
+    /* flights */
+    .flight .route{font-size:23px}
+    .fgrid{grid-template-columns:1fr 1fr;gap:14px 16px}
+    .fgrid .fl{font-size:11.5px}
+    .fgrid .fv{font-size:15.5px}
+
+    /* today banner */
+    .today-banner .tb-title{font-size:22px}
+    .today-banner .tb-next{font-size:15px}
+  }
   .icon-btn:disabled:hover{background:transparent;color:var(--muted)}
   @media(min-width:820px){
     .info-cols{columns:2;column-gap:18px}
@@ -1718,9 +1785,13 @@ function TripDetail({slug,go,auth}){
         {!canEdit && <div className="ro-banner"><span>👁</span><span>View only. {auth.user ? "Only the owner and invited editors can change this trip." : <>Have edit access? <a onClick={auth.signIn}>Sign in</a>.</>}</span></div>}
         <StatRow trip={trip} update={update}/>
         <div className="tabsbar"><div className="tabs">
-          {TABS.map(t=><div key={t.k} className={"tab "+(tab===t.k?"active":"")} onClick={()=>setTab(t.k)}><span>{t.icon}</span>{t.label}</div>)}
+          {TABS.map(t=><div key={t.k} className={"tab "+(tab===t.k?"active":"")} onClick={()=>{ setTab(t.k);
+            // phones: the tab bar is pinned to the bottom, so bring the new tab's top into view
+            const c=document.getElementById("tab-content");
+            if(c&&window.matchMedia("(max-width:640px)").matches&&c.getBoundingClientRect().top<0) window.scrollTo({top:c.getBoundingClientRect().top+window.scrollY-10}); }}>
+            <span>{t.icon}</span>{t.label}</div>)}
         </div></div>
-        <div style={{paddingBottom:80}} key={tab} className="rise">
+        <div style={{paddingBottom:80}} key={tab} className="rise" id="tab-content">
           {tab==="itinerary" && <Itinerary trip={trip} update={update}/>}
           {tab==="flights" && <Flights trip={trip} update={update}/>}
           {tab==="packing" && <Packing trip={trip} update={update} auth={auth}/>}
@@ -1889,7 +1960,7 @@ function DayCard({trip,day,idx,update,onOpen,dragHandle,onMoveDay,dayCount,isTod
           <div className="day-title"><Editable value={day.title} onChange={v=>patch(d=>d.title=v)} placeholder="Title"/></div>
           <div className="day-loc">📍 <Editable value={day.location} onChange={v=>patch(d=>d.location=v)} placeholder="Location"/></div>
         </div>
-        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
+        <div className="day-ctrls">
           <span className={"type-pill "+type} onClick={canEdit?cycleType:undefined} title={canEdit?"Change type":""} style={{cursor:canEdit?"pointer":"default"}}>{TC[type].label}</span>
           <div style={{display:"flex",gap:2,alignItems:"center"}}>
             {dragHandle && <span className="drag-handle" title="Drag to reorder day" {...dragHandle}>⠿</span>}
